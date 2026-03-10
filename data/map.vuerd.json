@@ -1,0 +1,181 @@
+{
+  "$schema": "https://raw.githubusercontent.com/dineug/erd-editor/main/json-schema/schema.json",
+  "version": "3.0.0",
+  "settings": {
+    "width": 2000,
+    "height": 2000,
+    "scrollTop": 0,
+    "scrollLeft": -22,
+    "zoomLevel": 1,
+    "show": 431,
+    "database": 4,
+    "databaseName": "",
+    "canvasType": "ERD",
+    "language": 1,
+    "tableNameCase": 4,
+    "columnNameCase": 2,
+    "bracketType": 1,
+    "relationshipDataTypeSync": true,
+    "relationshipOptimization": false,
+    "columnOrder": [
+      1,
+      2,
+      4,
+      8,
+      16,
+      32,
+      64
+    ],
+    "maxWidthComment": -1,
+    "ignoreSaveSettings": 0
+  },
+  "doc": {
+    "tableIds": [
+      "k2km5uNcBRuJP74ohnSWV"
+    ],
+    "relationshipIds": [],
+    "indexIds": [],
+    "memoIds": []
+  },
+  "collections": {
+    "tableEntities": {
+      "k2km5uNcBRuJP74ohnSWV": {
+        "id": "k2km5uNcBRuJP74ohnSWV",
+        "name": "michelin_star_restaurants",
+        "comment": "",
+        "columnIds": [
+          "aMbY_Vv2oxSSHbYGwlROZ",
+          "N9V2IM1ifMtv9m9mXXDwK",
+          "k1o9QmnNQ12ZvckEhv2Il",
+          "21VBdzT7t7uNhkISEfWql",
+          "wFNdd0GQSMMmTNOL-0Rl4"
+        ],
+        "seqColumnIds": [
+          "aMbY_Vv2oxSSHbYGwlROZ",
+          "N9V2IM1ifMtv9m9mXXDwK",
+          "k1o9QmnNQ12ZvckEhv2Il",
+          "21VBdzT7t7uNhkISEfWql",
+          "wFNdd0GQSMMmTNOL-0Rl4"
+        ],
+        "ui": {
+          "x": 63,
+          "y": 127,
+          "zIndex": 2,
+          "widthName": 135,
+          "widthComment": 60,
+          "color": ""
+        },
+        "meta": {
+          "updateAt": 1773104445131,
+          "createAt": 1773045169514
+        }
+      }
+    },
+    "tableColumnEntities": {
+      "aMbY_Vv2oxSSHbYGwlROZ": {
+        "id": "aMbY_Vv2oxSSHbYGwlROZ",
+        "tableId": "k2km5uNcBRuJP74ohnSWV",
+        "name": "restaurant_id",
+        "comment": "",
+        "dataType": "INT",
+        "default": "",
+        "options": 10,
+        "ui": {
+          "keys": 1,
+          "widthName": 71,
+          "widthComment": 60,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1773045261583,
+          "createAt": 1773045213400
+        }
+      },
+      "N9V2IM1ifMtv9m9mXXDwK": {
+        "id": "N9V2IM1ifMtv9m9mXXDwK",
+        "tableId": "k2km5uNcBRuJP74ohnSWV",
+        "name": "restaurant_name",
+        "comment": "",
+        "dataType": "VARCHAR(150)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 90,
+          "widthComment": 60,
+          "widthDataType": 81,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1773045281887,
+          "createAt": 1773045264991
+        }
+      },
+      "k1o9QmnNQ12ZvckEhv2Il": {
+        "id": "k1o9QmnNQ12ZvckEhv2Il",
+        "tableId": "k2km5uNcBRuJP74ohnSWV",
+        "name": "grade",
+        "comment": "",
+        "dataType": "VARCHAR(20)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 60,
+          "widthComment": 60,
+          "widthDataType": 75,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1773045337472,
+          "createAt": 1773045281127
+        }
+      },
+      "21VBdzT7t7uNhkISEfWql": {
+        "id": "21VBdzT7t7uNhkISEfWql",
+        "tableId": "k2km5uNcBRuJP74ohnSWV",
+        "name": "cuisine_type",
+        "comment": "",
+        "dataType": "VARCHAR(100)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 66,
+          "widthComment": 60,
+          "widthDataType": 81,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1773045348135,
+          "createAt": 1773045338488
+        }
+      },
+      "wFNdd0GQSMMmTNOL-0Rl4": {
+        "id": "wFNdd0GQSMMmTNOL-0Rl4",
+        "tableId": "k2km5uNcBRuJP74ohnSWV",
+        "name": "address",
+        "comment": "",
+        "dataType": "VARCHAR(255)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 60,
+          "widthComment": 60,
+          "widthDataType": 81,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1773045360528,
+          "createAt": 1773045349752
+        }
+      }
+    },
+    "relationshipEntities": {},
+    "indexEntities": {},
+    "indexColumnEntities": {},
+    "memoEntities": {}
+  }
+}
