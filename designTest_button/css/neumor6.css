@@ -1,0 +1,23 @@
+/* 6. 네오모피즘 CSS */
+/* 배경색을 회색빛이 도는 흰색으로 맞춰야 예쁩니다 */
+.filter-section { background-color: #e0e5ec; padding: 20px; } 
+.btn { 
+    padding: 12px 24px; 
+    border: none; 
+    background-color: #e0e5ec; /* 배경색과 동일 */
+    color: #4a4a4a; 
+    border-radius: 12px;
+    font-weight: 600;
+    /* 핵심: 밝은 그림자와 어두운 그림자를 동시에 줌 */
+    box-shadow: 9px 9px 16px rgb(163,177,198,0.6), 
+               -9px -9px 16px rgba(255,255,255, 0.5);
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+.btn:hover { color: #a21927; }
+.btn.active { 
+    /* 누르면 안으로 쏙 들어가는 효과 (inset) */
+    box-shadow: inset 6px 6px 10px 0 rgba(163,177,198,0.7),
+                inset -6px -6px 10px 0 rgba(255,255,255,0.8);
+    color: #a21927; 
+}

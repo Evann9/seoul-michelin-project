@@ -1,0 +1,20 @@
+/* 8. 그라디언트 팝 CSS */
+.filter-section { background-color: white; padding: 20px; }
+.btn { 
+    padding: 10px 22px; 
+    border: none; 
+    /* 기본은 회색 그라데이션 */
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); 
+    color: #555; 
+    border-radius: 25px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.3s;
+}
+.btn:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+.btn.active { 
+    /* 활성화 시 화려한 붉은색 계열 그라데이션 */
+    background: linear-gradient(135deg, #ff0844 0%, #ffb199 100%); 
+    color: white; 
+    box-shadow: 0 5px 15px rgba(255,8,68,0.4); 
+}

@@ -1,0 +1,20 @@
+/* 1. 미쉐린 클래식 CSS */
+.filter-section { background-color: white; padding: 20px; border-bottom: 2px solid #a21927; }
+.btn { 
+    padding: 8px 18px; 
+    border: 1px solid #ccc; 
+    background: white; 
+    color: #333; 
+    border-radius: 4px; /* 살짝만 둥글게 */
+    font-family: 'Times New Roman', serif; /* 클래식한 글꼴 */
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+.btn:hover { border-color: #a21927; color: #a21927; }
+.btn.active { 
+    background-color: #a21927; 
+    color: white; 
+    border-color: #a21927; 
+    font-weight: bold; 
+}

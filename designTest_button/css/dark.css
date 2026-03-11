@@ -1,0 +1,25 @@
+/* 3. 다크 모드 네온 CSS */
+.filter-section { background-color: #121212; padding: 20px; }
+.btn { 
+    padding: 8px 16px; 
+    border: 2px solid #333; 
+    background: transparent; 
+    color: #aaa; 
+    border-radius: 8px;
+    font-family: 'Courier New', monospace; /* 타자기 글꼴 */
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+.btn:hover { 
+    border-color: #ff3366; 
+    color: #ff3366; 
+    text-shadow: 0 0 8px rgba(255,51,102,0.6); /* 네온 빛 효과 */
+}
+.btn.active { 
+    background-color: #ff3366; 
+    color: #121212; 
+    border-color: #ff3366; 
+    box-shadow: 0 0 15px rgba(255,51,102,0.5); 
+    font-weight: bold;
+}

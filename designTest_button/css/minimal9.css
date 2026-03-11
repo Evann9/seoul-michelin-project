@@ -1,0 +1,19 @@
+/* 9. 미니멀 아웃라인 CSS */
+.filter-section { background-color: white; padding: 20px; border-bottom: 1px solid #eee; }
+.btn { 
+    padding: 8px 18px; 
+    border: 2px solid #ddd; 
+    background: transparent; 
+    color: #666; 
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: 0.2s;
+}
+.btn:hover { border-color: #999; color: #333; }
+.btn.active { 
+    border-color: #a21927; 
+    color: #a21927; 
+    /* 선택 시 배경에 아주 연한 붉은색 추가 */
+    background-color: rgba(162, 25, 39, 0.05); 
+}

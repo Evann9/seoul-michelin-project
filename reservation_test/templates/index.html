@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>Michelin Guide - Complete with DB & Favorites</title>
+    <style>
+        body { margin: 0; padding: 0; font-family: 'Arial', sans-serif; display: flex; height: 100vh; background-color: #f4f4f4; }
+        
+        .left-panel { flex: 6; background-color: #e8e8e8; display: flex; justify-content: center; align-items: center; border-right: 2px solid #ccc; position: relative; overflow: hidden; }
+        #map-view { display: flex; justify-content: center; align-items: center; width: 100%; height: 100%; text-align: center; font-size: 2rem; color: #666; }
+        #detail-view { display: none; width: 100%; height: 100%; background: white; padding: 50px; box-sizing: border-box; overflow-y: auto; position: relative; }
+        
+        .back-btn { padding: 10px 15px; background: #333; color: white; border: none; border-radius: 5px; cursor: pointer; margin-bottom: 20px; font-size: 1rem; }
+        .back-btn:hover { background: #555; }
+        .detail-title { font-size: 3rem; color: #a21927; margin: 0 0 10px 0; display: inline-block;}
+        .res-stars { color: #a21927; font-weight: bold; }
+        .detail-desc { font-size: 1.2rem; line-height: 1.8; color: #444; margin-top: 20px; }
+
+        #detail-favorite-btn { font-size: 2.5rem; background: none; border: none; cursor: pointer; margin-left: 20px; vertical-align: super; }
+
+        .right-panel { flex: 4; display: flex; flex-direction: column; background-color: white; height: 100%; }
+        .filter-section { padding: 20px; background-color: #a21927; color: white; z-index: 10; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .filter-buttons { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px;}
+        
+        .btn { padding: 8px 16px; border: none; background: rgba(255,255,255,0.2); color: white; border-radius: 30px; font-weight: 600; cursor: pointer; transition: 0.2s; }
+        .btn:hover { background: rgba(255,255,255,0.4); }
+        .btn.active { background: white; color: #a21927; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+
+        .cuisine-selector-container { margin-top: 15px; background: rgba(0,0,0,0.1); padding: 10px; border-radius: 10px; height: 120px; overflow-y: auto; }
+        .cuisine-checkbox-label { display: block; padding: 5px 10px; cursor: pointer; color: white; border-radius: 5px; transition: background-color 0.2s; }
+        .cuisine-checkbox-label:hover { background-color: rgba(255,255,255,0.2); }
+        .cuisine-checkbox-label input[type="checkbox"] { margin-right: 8px; cursor: pointer; }
+        
+        #active-filters-display { margin-top: 10px; display: flex; gap: 5px; flex-wrap: wrap; }
+        .filter-tag { background: white; color: #a21927; padding: 3px 10px; border-radius: 15px; font-size: 0.8rem; font-weight: bold; display: flex; align-items: center; gap: 5px;}
+        .filter-tag span { cursor: pointer; color: #888; }
+        .filter-tag span:hover { color: red; }
+        
+        .list-section { flex: 1; overflow-y: auto; padding: 20px; }
+        .restaurant-card { border: 1px solid #ddd; padding: 15px; margin-bottom: 15px; border-radius: 8px; cursor: pointer; transition: 0.2s; position: relative;}
+        .restaurant-card:hover { border-color: #a21927; box-shadow: 0 2px 8px rgba(162, 25, 39, 0.2); background-color: #fdf5f6; }
+        
+        .card-favorite-icon { position: absolute; top: 15px; right: 15px; font-size: 1.5rem; }
+
+        /* 예약 모달 스타일 */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 100; justify-content: center; align-items: center; }
+        .modal-content { background: white; padding: 30px; border-radius: 10px; width: 300px; display: flex; flex-direction: column; gap: 15px; }
+        .modal-content input, .modal-content select { padding: 10px; border: 1px solid #ccc; border-radius: 5px; }
+        .modal-content button { padding: 10px; background: #a21927; color: white; border: none; border-radius: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <div class="left-panel">
+        <div id="map-view">🗺️ 지도 화면</div>
+        
+        <div id="detail-view">
+            <button onclick="showMap()" class="back-btn">⬅️ 지도로 돌아가기</button>
+            <br>
+            <h1 id="dt-name" class="detail-title">이름</h1>
+            <button id="detail-favorite-btn" onclick="toggleFavoriteFromDetail()">🤍</button>
+            
+            <h3 id="dt-info">정보</h3>
+            <h3 id="dt-stars" class="res-stars">별점</h3>
+            <p id="dt-desc" class="detail-desc">설명</p>
+            <hr style="border: 0; height: 1px; background: #eee; margin: 20px 0;">
+            <button onclick="openReservationModal()" style="width:100%; padding:15px; background:#a21927; color:white; border:none; border-radius:5px; font-weight:bold; cursor:pointer; font-size:1.1rem;">🗓️ 예약하기</button>
+        </div>
+    </div>
+
+    <div class="right-panel">
+        <div class="filter-section">
+            <h3 style="margin:0;">🔍 맞춤 필터</h3>
+            
+            <div class="filter-buttons">
+                <button class="btn filter-btn active" id="btn-all" onclick="resetFilters()">전체</button>
+                <button class="btn filter-btn" data-category="grade" data-value="1 Star">🌟 1 Star</button>
+                <button class="btn filter-btn" data-category="grade" data-value="2 Stars">🌟🌟 2 Stars</button>
+                <button class="btn filter-btn" data-category="grade" data-value="3 Stars">🌟🌟🌟 3 Stars</button>
+                <button class="btn filter-btn" data-category="favorite" data-value="true" style="border: 1px solid white;">❤️ 찜한 식당만</button>
+            </div>
+
+            <div class="cuisine-selector-container" id="cuisine-checkboxes">
+                <div style="font-size: 0.9rem; margin-bottom: 8px; font-weight: bold;">🍽️ 음식 종류 선택 (클릭만 하세요)</div>
+                <label class="cuisine-checkbox-label"><input type="checkbox" value="멕시칸" onchange="updateCuisineFilter()"> 🌮 멕시칸</label>
+                <label class="cuisine-checkbox-label"><input type="checkbox" value="비건" onchange="updateCuisineFilter()"> 🥗 비건</label>
+                <label class="cuisine-checkbox-label"><input type="checkbox" value="스시" onchange="updateCuisineFilter()"> 🍣 스시</label>
+                <label class="cuisine-checkbox-label"><input type="checkbox" value="이노베이티브" onchange="updateCuisineFilter()"> 💡 이노베이티브</label>
+                <label class="cuisine-checkbox-label"><input type="checkbox" value="일식" onchange="updateCuisineFilter()"> 🍱 일식</label>
+                <label class="cuisine-checkbox-label"><input type="checkbox" value="중식" onchange="updateCuisineFilter()"> 🍜 중식</label>
+                <label class="cuisine-checkbox-label"><input type="checkbox" value="지중해식" onchange="updateCuisineFilter()"> 🥙 지중해식</label>
+                <label class="cuisine-checkbox-label"><input type="checkbox" value="컨템포러리" onchange="updateCuisineFilter()"> 🍽️ 컨템포러리</label>
+                <label class="cuisine-checkbox-label"><input type="checkbox" value="프렌치" onchange="updateCuisineFilter()"> 🥐 프렌치</label>
+                <label class="cuisine-checkbox-label"><input type="checkbox" value="한식" onchange="updateCuisineFilter()"> 🍚 한식</label>
+            </div>
+
+            <div id="active-filters-display"></div>
+        </div>
+
+        <div class="list-section" id="restaurant-list">
+            <p style="color:#777; text-align:center;">목록을 불러오는 중입니다...</p>
+        </div>
+    </div>
+
+    <div id="reservation-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h3 style="margin-top:0;">예약하기</h3>
+            <input type="text" id="res-name" placeholder="예약자 이름">
+            <input type="text" id="res-phone" placeholder="전화번호 (010-0000-0000)">
+            <div id="time-slot-container" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 15px 0;"></div>
+            <input type="hidden" id="selected-time-value">
+            <button onclick="submitReservation()">예약 확정</button>
+            <button onclick="closeModal()" style="background:#888;">취소</button>
+        </div>
+    </div>
+
+    <button id="reset-res-btn" class="btn btn-danger" style="position: fixed; bottom: 20px; left: 20px; z-index: 1000;">
+    🗑️ 예약 기능 초기화
+    </button>
+
+    <script>
+        let selectedFilters = { grade: [], cuisine: [], favorite: false };
+        let currentRestaurantData = null; 
+
+        window.onload = function() {
+            fetchRestaurantsFromServer();
+        };
+
+        document.querySelectorAll('.filter-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                if(this.id === 'btn-all') {
+                    resetFilters();
+                    return;
+                }
+
+                document.getElementById('btn-all').classList.remove('active');
+                this.classList.toggle('active');
+
+                const category = this.getAttribute('data-category');
+                const value = this.getAttribute('data-value');
+
+                if(category === 'favorite') {
+                    selectedFilters.favorite = this.classList.contains('active');
+                } else if (category === 'grade') {
+                    if (this.classList.contains('active')) {
+                        selectedFilters.grade.push(value);
+                    } else {
+                        selectedFilters.grade = selectedFilters.grade.filter(v => v !== value);
+                    }
+                }
+                
+                updateFilterTags();
+                fetchRestaurantsFromServer();
+            });
+        });
+
+        function updateCuisineFilter() {
+            document.getElementById('btn-all').classList.remove('active');
+            const checkedBoxes = document.querySelectorAll('#cuisine-checkboxes input[type="checkbox"]:checked');
+            selectedFilters.cuisine = Array.from(checkedBoxes).map(cb => cb.value);
+
+            updateFilterTags();
+            fetchRestaurantsFromServer();
+        }
+
+        function updateFilterTags() {
+            const display = document.getElementById('active-filters-display');
+            display.innerHTML = ''; 
+
+            selectedFilters.grade.forEach(g => {
+                display.innerHTML += `<div class="filter-tag">${g} Star <span onclick="removeFilter('grade', '${g}')">✖</span></div>`;
+            });
+            selectedFilters.cuisine.forEach(c => {
+                display.innerHTML += `<div class="filter-tag">${c} <span onclick="removeFilter('cuisine', '${c}')">✖</span></div>`;
+            });
+            if(selectedFilters.favorite) {
+                display.innerHTML += `<div class="filter-tag">❤️ 찜한 식당 <span onclick="removeFilter('favorite', '')">✖</span></div>`;
+            }
+
+            if(selectedFilters.grade.length === 0 && selectedFilters.cuisine.length === 0 && !selectedFilters.favorite) {
+                document.getElementById('btn-all').classList.add('active');
+            }
+        }
+
+        function removeFilter(category, value) {
+            if(category === 'grade') {
+                selectedFilters.grade = selectedFilters.grade.filter(v => v !== value);
+                document.querySelector(`.filter-btn[data-value="${value}"]`).classList.remove('active');
+            } else if (category === 'cuisine') {
+                selectedFilters.cuisine = selectedFilters.cuisine.filter(v => v !== value);
+                document.querySelector(`#cuisine-checkboxes input[value="${value}"]`).checked = false;
+            } else if (category === 'favorite') {
+                selectedFilters.favorite = false;
+                document.querySelector(`.filter-btn[data-category="favorite"]`).classList.remove('active');
+            }
+            
+            updateFilterTags();
+            fetchRestaurantsFromServer();
+        }
+
+        function resetFilters() {
+            selectedFilters = { grade: [], cuisine: [], favorite: false };
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('btn-all').classList.add('active');
+            document.querySelectorAll('#cuisine-checkboxes input[type="checkbox"]').forEach(cb => cb.checked = false);
+            updateFilterTags();
+            fetchRestaurantsFromServer();
+        }
+
+        function fetchRestaurantsFromServer() {
+            fetch('http://127.0.0.1:5000/api/filter', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(selectedFilters)
+            })
+            .then(response => response.json())
+            .then(data => drawList(data))
+            .catch(error => console.error('에러:', error));
+        }
+
+        // [핵심 수정 부분] 에러가 왔을 때 자바스크립트가 터지지 않도록 방어하는 로직 추가!
+        function drawList(restaurants) {
+            const listContainer = document.getElementById('restaurant-list');
+            listContainer.innerHTML = ''; 
+
+            // 1. 서버에서 객체(에러 메시지)가 왔을 때
+            if (restaurants.error) {
+                listContainer.innerHTML = `<p style="color:red; text-align:center;">🚫 ${restaurants.error}<br>터미널(콘솔)을 확인해 주세요.</p>`;
+                return;
+            }
+
+            // 2. 데이터가 없을 때
+            if (!Array.isArray(restaurants) || restaurants.length === 0) {
+                listContainer.innerHTML = '<p style="color:#777; text-align:center;">조건에 맞는 식당이 없습니다.</p>';
+                return;
+            }
+
+            // 3. 정상적으로 배열이 들어왔을 때만 카드를 그림
+            restaurants.forEach(res => {
+                const heartIcon = res.is_favorite === 1 ? '❤️' : '🤍';
+                const resDataStr = encodeURIComponent(JSON.stringify(res));
+
+                const card = `
+                    <div class="restaurant-card" onclick="showDetail('${resDataStr}')">
+                        <div class="card-favorite-icon" onclick="event.stopPropagation(); toggleFavorite(${res.restaurant_id}, this)">${heartIcon}</div>
+                        <p style="font-size: 1.2rem; font-weight: bold; margin: 0 0 5px 0;">${res.restaurant_name}</p>
+                        <p style="font-size: 0.9rem; color: #777; margin: 0;">${res.address} | ${res.cuisine_type}</p>
+                        <p style="color: #a21927; font-weight: bold; margin-top:5px;">${res.grade} Stars</p>
+                    </div>
+                `;
+                listContainer.innerHTML += card;
+            });
+        }
+
+        function showDetail(encodedResData) {
+            const res = JSON.parse(decodeURIComponent(encodedResData));
+            currentRestaurantData = res; 
+
+            document.getElementById('map-view').style.display = 'none';
+            document.getElementById('detail-view').style.display = 'block';
+            
+            document.getElementById('dt-name').innerText = res.restaurant_name;
+            document.getElementById('dt-info').innerText = `${res.address} | ${res.cuisine_type}`;
+            document.getElementById('dt-stars').innerText = `${res.grade} Stars`;
+            document.getElementById('dt-desc').innerText = "평균 가격대: " + res.price;
+
+            const heartBtn = document.getElementById('detail-favorite-btn');
+            heartBtn.innerText = res.is_favorite === 1 ? '❤️' : '🤍';
+        }
+
+        function showMap() {
+            document.getElementById('detail-view').style.display = 'none';
+            document.getElementById('map-view').style.display = 'flex';
+        }
+
+        // =====================================================================
+        // [새로 추가된 JS 함수들] 서버와 통신하는 기능
+        // =====================================================================
+        
+        // 1. 리스트에서 하트 아이콘 클릭 시
+        function toggleFavorite(resId, element) {
+            fetch('http://127.0.0.1:5000/api/toggle_favorite', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ restaurant_id: resId })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    element.innerText = data.action === 'added' ? '❤️' : '🤍';
+                }
+            });
+        }
+
+        // 2. 상세 페이지에서 하트 아이콘 클릭 시
+        function toggleFavoriteFromDetail() {
+            if(!currentRestaurantData) return;
+            
+            fetch('http://127.0.0.1:5000/api/toggle_favorite', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ restaurant_id: currentRestaurantData.restaurant_id })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    const btn = document.getElementById('detail-favorite-btn');
+                    btn.innerText = data.action === 'added' ? '❤️' : '🤍';
+                    fetchRestaurantsFromServer(); // 리스트 새로고침
+                }
+            });
+        }
+
+        // 3. 예약 모달창 열기 및 닫기
+        // 1. 우리가 사용할 시간대 정의 (숫자: "표시될 시간")
+        const timeConfig = {
+            1: "18:00",
+            2: "19:00",
+            3: "20:00",
+            4: "21:00"
+        };
+
+        async function openReservationModal() {
+            if (!currentRestaurantData) return;
+            const resId = currentRestaurantData.restaurant_id;
+            const container = document.getElementById('time-slot-container');
+            const hiddenInput = document.getElementById('selected-time-value');
+            
+            hiddenInput.value = '';   // 선택값 초기화
+
+            try {
+            // 2. [핵심] await를 써서 데이터가 올 때까지 여기서 딱 멈춰 기다립니다.
+                const response = await fetch(`http://127.0.0.1:5000/api/check_reservation?id=${resId}`);
+                const bookedTimes = await response.json();
+
+            // 3. [핵심] 임시 바구니(DocumentFragment)를 만듭니다. 
+            // 여기에 버튼을 다 담아도 아직 화면에는 아무 변화가 없습니다.
+                const tempFragment = document.createDocumentFragment();
+                // 설정된 시간대만큼 버튼 생성
+                
+                for (let key in timeConfig) {
+                    const btn = document.createElement('button');
+                    btn.type = "button";
+                    btn.innerText = timeConfig[key];
+                    btn.style.padding = "10px";
+                    btn.style.border = "1px solid #ddd";
+                    btn.style.borderRadius = "5px";
+                    btn.style.backgroundColor = "white";
+                    btn.style.cursor = "pointer";
+
+                    const isBooked = bookedTimes.includes(parseInt(key));
+
+                    if (isBooked) {
+                        // 예약된 경우: 흐리게 및 클릭 방지
+                        btn.disabled = true;
+                        btn.style.color = "#ccc";
+                        btn.style.backgroundColor = "#f9f9f9";
+                        btn.innerText += " (불가)";
+                    } else {
+                        // 예약 가능: 클릭 이벤트 추가
+                        btn.onclick = function() {
+                            // 모든 버튼 스타일 초기화
+                            Array.from(container.children).forEach(b => {
+                                if(!b.disabled) {
+                                    b.style.backgroundColor = "white";
+                                    b.style.color = "black";
+                                    b.style.borderColor = "#ddd";
+                                }
+                            });
+                            // 선택한 버튼 강조
+                            btn.style.backgroundColor = "#a21927";
+                            btn.style.color = "white";
+                            btn.style.borderColor = "#a21927";
+                            // 선택한 '숫자 값'을 숨겨진 input에 저장
+                            hiddenInput.value = key;
+                        };
+                    }
+                    tempFragment.appendChild(btn); // 임시 바구니에 담기
+                    
+                }
+                // 4. [마지막 마법] 모든 버튼이 '완성'된 시점에 기존 내용을 싹 지우고 한 번에 넣기!
+                container.innerHTML = ''; 
+                container.appendChild(tempFragment);
+                
+                document.getElementById('reservation-modal').style.display = 'flex';
+            
+            } catch (error) {
+                console.error("데이터 로딩 실패:", error);
+                alert("예약 정보를 불러오지 못했습니다.");
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('reservation-modal').style.display = 'none';
+        }
+
+        // 4. 예약 데이터 서버로 전송
+        function submitReservation() {
+            const name = document.getElementById('res-name').value;
+            const phone = document.getElementById('res-phone').value;
+            const time = document.getElementById('selected-time-value').value; // 수정된 부분!
+
+            if(!name || !phone || !time) {
+                alert("정보를 모두 입력하고 시간을 선택해주세요.");
+                return;
+            }
+
+            fetch('http://127.0.0.1:5000/api/make_reservation', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    restaurant_id: currentRestaurantData.restaurant_id,
+                    user_name: name,
+                    user_phone: phone,
+                    time: time
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    alert("예약이 확정되었습니다!");
+                    closeModal();
+                } else {
+                    alert(data.message || "예약에 실패했습니다.");
+                }
+            });
+        }
+
+        // 예약 정보 초기화하기( 새로운 예약 시뮬레이션을 위해서 )
+        document.getElementById('reset-res-btn').addEventListener('click', function() {
+            if (confirm("정말로 모든 예약 내역을 초기화하시겠습니까? 이 작업은 되돌릴 수 없습니다.")) {
+            fetch('/api/reset_reservations', {
+            method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+            if (data.success) {
+                alert("예약 테이블이 성공적으로 초기화되었습니다.");
+                location.reload(); // 화면 새로고침하여 반영
+            } else {
+                alert("초기화 실패: " + data.message);
+            }
+            })
+            .catch(error => console.error('Error:', error));
+            }
+        });
+    </script>
+
+</body>
+</html>

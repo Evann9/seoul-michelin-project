@@ -1,0 +1,25 @@
+/* 7. 글래스모피즘 CSS */
+.filter-section { 
+    /* 살짝 투명한 배경과 흐림(블러) 효과 */
+    background: rgba(255, 255, 255, 0.2); 
+    backdrop-filter: blur(10px); 
+    -webkit-backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255,255,255,0.3);
+    padding: 20px; 
+}
+.btn { 
+    padding: 10px 20px; 
+    border: 1px solid rgba(255, 255, 255, 0.4); 
+    background: rgba(255, 255, 255, 0.1); /* 반투명 흰색 */
+    color: #333; 
+    border-radius: 20px;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    transition: 0.3s;
+}
+.btn:hover { background: rgba(255, 255, 255, 0.3); }
+.btn.active { 
+    background: rgba(162, 25, 39, 0.8); /* 미쉐린 레드 반투명 */
+    color: white; 
+    border-color: rgba(162, 25, 39, 1);
+}
