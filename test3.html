@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Michelin Guide 2026 - Seoul</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@100;300;400;500;700;900&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --michelin-red: #bd1622;
+            --michelin-dark: #1a1a1a;
+            --michelin-gold: #c5a065;
+            --michelin-bg: #fdfaf5;
+            --michelin-white: #ffffff;
+            --font-main: 'Noto Sans KR', sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-main);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+            background-color: var(--michelin-bg);
+        }
+
+        /* 왼쪽 지도 영역 */
+        #main-content {
+            flex: 6.5;
+            position: relative;
+            border-right: 1.5px solid var(--michelin-red);
+        }
+
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        /* 오른쪽 사이드바 */
+        #side-bar {
+            flex: 3.5;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            background: var(--michelin-white);
+            min-width: 420px;
+        }
+
+        .header {
+            padding: 40px 30px 20px 30px;
+            background: var(--michelin-red);
+            color: #fff;
+            text-align: center;
+        }
+
+        .header h2 {
+            font-size: 1.8rem;
+            text-transform: uppercase;
+            letter-spacing: 5px;
+            font-weight: 700;
+        }
+
+        .filter-container {
+            padding: 15px 25px 25px 25px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            background: var(--michelin-red);
+            justify-content: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .filter-btn {
+            padding: 7px 14px;
+            border-radius: 2px;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            background: transparent;
+            color: #fff;
+            cursor: pointer;
+            font-size: 0.75rem;
+            transition: 0.2s;
+        }
+
+        .filter-btn.active {
+            background: #fff;
+            color: var(--michelin-red);
+            font-weight: 700;
+        }
+
+        #restaurant-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 25px;
+            background: var(--michelin-bg);
+            scroll-behavior: smooth;
+        }
+
+        /* 식당 카드 스타일 */
+        .restaurant-item {
+            position: relative;
+            background: #fff;
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 1px solid #eee;
+            cursor: pointer;
+            transition: 0.4s;
+        }
+
+        .restaurant-item:hover {
+            transform: translateY(-5px);
+            border-color: var(--michelin-gold);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.05);
+        }
+
+        .restaurant-item.highlight {
+            border: 2px solid var(--michelin-red);
+            background: #fff9f9;
+        }
+
+        .res-name {
+            font-size: 1.7rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .res-address {
+            font-size: 0.85rem;
+            color: #999;
+            margin-bottom: 15px;
+        }
+
+        .res-info-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .badge {
+            padding: 5px 12px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .badge-star {
+            background: var(--michelin-red);
+            color: #fff;
+        }
+
+        .badge-cate {
+            color: var(--michelin-gold);
+            border: 1px solid var(--michelin-gold);
+        }
+
+        /* 하트 CSS 추가 */
+        .fav-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 1.5rem;
+            color: #ddd;
+            cursor: pointer;
+            user-select: none;
+            transition: 0.2s;
+        }
+
+        .fav-btn.active {
+            color: var(--michelin-gold);
+        }
+    </style>
+</head>
+
+<body>
+
+    <main id="main-content">
+        <iframe src="map_강남구.html" id="map-frame"></iframe>
+    </main>
+
+    <nav id="side-bar">
+        <div class="header">
+            <h2>Michelin</h2>
+            <p>Selection 2026</p>
+        </div>
+
+        <div class="filter-container">
+            <button class="filter-btn active" data-group="all" onclick="toggleFilter(this)">전체</button>
+            <button class="filter-btn" data-group="star" data-value="3 Stars" onclick="toggleFilter(this)">3
+                Stars</button>
+            <button class="filter-btn" data-group="star" data-value="2 Stars" onclick="toggleFilter(this)">2
+                Stars</button>
+            <button class="filter-btn" data-group="star" data-value="1 Stars" onclick="toggleFilter(this)">1
+                Stars</button>
+            <button class="filter-btn" data-group="cate" data-value="한식" onclick="toggleFilter(this)">한식</button>
+            <button class="filter-btn" data-group="cate" data-value="중식" onclick="toggleFilter(this)">중식</button>
+            <button class="filter-btn" data-group="cate" data-value="일식" onclick="toggleFilter(this)">일식</button>
+            <button class="filter-btn" data-group="cate" data-value="스시" onclick="toggleFilter(this)">스시</button>
+            <button class="filter-btn" data-group="cate" data-value="멕시칸" onclick="toggleFilter(this)">멕시칸</button>
+            <button class="filter-btn" data-group="cate" data-value="프렌치" onclick="toggleFilter(this)">프렌치</button>
+            <button class="filter-btn" data-group="cate" data-value="지중해식" onclick="toggleFilter(this)">지중해식</button>
+            <button class="filter-btn" data-group="cate" data-value="이노베이티브"
+                onclick="toggleFilter(this)">이노베이티브</button>
+            <button class="filter-btn" data-group="cate" data-value="컨템포러리" onclick="toggleFilter(this)">컨템포러리</button>
+            <button class="filter-btn" data-group="cate" data-value="비건" onclick="toggleFilter(this)">비건</button>
+            <button class="filter-btn" data-group="fav" data-value="true" onclick="toggleFilter(this)">즐겨찾기</button>
+
+        </div>
+
+        <div id="restaurant-list"></div>
+    </nav>
+
+    <script>
+        // 데이터 (추후 DB 연동 시 이 객체만 교체)
+        const restaurantsData = [
+            {
+                id: 1, name: "밍글스 (Mingles)", star: "3 Stars", food: "한식", addr: "서울 강남구 선릉로132길 19 2층",
+                isFavorite: false
+            },
+            {
+                id: 2, name: "모수 (Mosu)", star: "2 Stars", food: "이노베이티브", addr: "서울 용산구 이태원로 191",
+                isFavorite: false
+            },
+            {
+                id: 3, name: "소수헌 (Sosuheon)", star: "2 Stars", food: "스시", addr: "서울 강남구 도산대로45길 8-5 2층",
+                isFavorite: false
+            },
+            {
+                id: 4, name: "권숙수 (KwonSookSoo)", star: "2 Stars", food: "한식", addr: "서울 강남구 압구정로46길 27 4층",
+                isFavorite: false
+            },
+            {
+                id: 5, name: "라연 (La Yeon)", star: "2 Stars", food: "한식", addr: "서울 중구 동호로 249 (신라호텔 23층)",
+                isFavorite: false
+            },
+            {
+                id: 6, name: "레스토랑 알렌 (Restaurant Allen)", star: "2 Stars", food: "컨템포러리", addr: "서울 강남구 테헤란로 231 센터필드 서관 2층",
+                isFavorite: false
+            },
+            {
+                id: 7, name: "미토우 (Mitou)", star: "2 Stars", food: "일식", addr: "서울 강남구 언주로154길 14 2층",
+                isFavorite: false
+            },
+            {
+                id: 8, name: "스와니예 (Soigné)", star: "2 Stars", food: "컨템포러리", addr: "서울 강남구 강남대로 652 신사스퀘어 2층",
+                isFavorite: false
+            },
+            {
+                id: 9, name: "알라 프리마 (alla prima)", star: "2 Stars", food: "이노베이티브", addr: "서울 강남구 학동로17길 13",
+                isFavorite: false
+            },
+            {
+                id: 10, name: "에빗 (Evett)", star: "2 Stars", food: "이노베이티브", addr: "서울 강남구 도산대로45길 10-5",
+                isFavorite: false
+            },
+            {
+                id: 11, name: "정식당 (Jungsik)", star: "2 Stars", food: "컨템포러리", addr: "서울 강남구 선릉로158길 11",
+                isFavorite: false
+            },
+            {
+                id: 12, name: "기와강 (GiwaKang)", star: "1 Stars", food: "한식", addr: "서울 종로구 율곡로 33 2층",
+                isFavorite: false
+            },
+            {
+                id: 13, name: "레스토랑 산 (SAN)", star: "1 Stars", food: "이노베이티브", addr: "서울 용산구 독서당로 111 2층",
+                isFavorite: false
+            },
+            {
+                id: 14, name: "스시 카네사카 (Sushi Kanesaka)", star: "1 Stars", food: "스시", addr: "서울 중구 남대문로 73 (롯데호텔 서울)",
+                isFavorite: false
+            },
+            {
+                id: 15, name: "꼴라쥬 (Collage)", star: "1 Stars", food: "프렌치", addr: "서울 용산구 독서당로 29길 5-6",
+                isFavorite: false
+            },
+            {
+                id: 16, name: "가겐 바이 최준호 (GAGGEN)", star: "1 Stars", food: "일식", addr: "서울 강남구 언주로164길 24 2층",
+                isFavorite: false
+            },
+            {
+                id: 17, name: "레스토랑 주은 (JUEUN)", star: "1 Stars", food: "한식", addr: "서울 종로구 경희궁길 36 2층",
+                isFavorite: false
+            },
+            {
+                id: 18, name: "하쿠시 (Hakusi)", star: "1 Stars", food: "일식", addr: "서울 강남구 도산대로15길 32-10",
+                isFavorite: false
+            },
+            {
+                id: 19, name: "강민철 레스토랑", star: "1 Stars", food: "프렌치", addr: "서울 강남구 도산대로68길 18 B1",
+                isFavorite: false
+            },
+            {
+                id: 20, name: "고료리 켄", star: "1 Stars", food: "컨템포러리", addr: "서울 강남구 언주로152길 11-5 2층",
+                isFavorite: false
+            },
+            {
+                id: 21, name: "기가스 (Gigas)", star: "1 Stars", food: "지중해식", addr: "서울 강남구 도산대로45길 8-7 2층",
+                isFavorite: false
+            },
+            {
+                id: 22, name: "뛰뚜아멍", star: "1 Stars", food: "프렌치", addr: "서울 강남구 강남대로160길 35-5",
+                isFavorite: false
+            },
+            {
+                id: 23, name: "라망 시크레", star: "1 Stars", food: "컨템포러리", addr: "서울 중구 퇴계로 67 (레스케이프 호텔 26층)",
+                isFavorite: false
+            },
+            {
+                id: 24, name: "라미띠에", star: "1 Stars", food: "프렌치", addr: "서울 강남구 언주로153길 7 2층",
+                isFavorite: false
+            },
+            {
+                id: 25, name: "레귬 (Légume)", star: "1 Stars", food: "비건", addr: "서울 강남구 강남대로162길 36 2층",
+                isFavorite: false
+            },
+            {
+                id: 26, name: "무니 (Muni)", star: "1 Stars", food: "일식", addr: "서울 강남구 도산대로72길 16",
+                isFavorite: false
+            },
+            {
+                id: 27, name: "무오키 (Muoki)", star: "1 Stars", food: "컨템포러리", addr: "서울 강남구 학동로55길 12-12",
+                isFavorite: false
+            },
+            {
+                id: 28, name: "비채나", star: "1 Stars", food: "한식", addr: "서울 송파구 올림픽로 300 (롯데월드타워 81층)",
+                isFavorite: false
+            },
+            {
+                id: 29, name: "빈호 (VINHO)", star: "1 Stars", food: "컨템포러리", addr: "서울 강남구 학동로43길 38 2층",
+                isFavorite: false
+            },
+            {
+                id: 30, name: "세븐스 도어 (7th Door)", star: "1 Stars", food: "컨템포러리", addr: "서울 강남구 학동로97길 41 4층",
+                isFavorite: false
+            },
+            {
+                id: 31, name: "소설한남", star: "1 Stars", food: "한식", addr: "서울 용산구 한남대로20길 21 B2",
+                isFavorite: false
+            },
+            {
+                id: 32, name: "소울 (Soul)", star: "1 Stars", food: "컨템포러리", addr: "서울 용산구 신흥로26길 35 B1",
+                isFavorite: false
+            },
+            {
+                id: 33, name: "솔밤 (Solbam)", star: "1 Stars", food: "컨템포러리", addr: "서울 강남구 삼성로126길 6 2층",
+                isFavorite: false
+            },
+            {
+                id: 34, name: "스시 마츠모토", star: "1 Stars", food: "스시", addr: "서울 강남구 도산대로49길 6-7",
+                isFavorite: false
+            },
+            {
+                id: 35, name: "에스콘디도 (Escondido)", star: "1 Stars", food: "멕시칸", addr: "서울 용산구 독서당로 103 B1",
+                isFavorite: false
+            },
+            {
+                id: 36, name: "온지음", star: "1 Stars", food: "한식", addr: "서울 종로구 효자로 33 4층",
+                isFavorite: false
+            },
+            {
+                id: 37, name: "유 유안 (Yu Yuan)", star: "1 Stars", food: "중식", addr: "서울 종로구 새문안로 97 (포시즌스 호텔 11층)",
+                isFavorite: false
+            },
+            {
+                id: 38, name: "윤서울 (YUN)", star: "1 Stars", food: "한식", addr: "서울 강남구 선릉로805 1층",
+                isFavorite: false
+            },
+            {
+                id: 39, name: "이스트 (y'east)", star: "1 Stars", food: "컨템포러리", addr: "서울 성동구 성수이로7길 27 2층",
+                isFavorite: false
+            },
+            {
+                id: 40, name: "이타닉 가든", star: "1 Stars", food: "컨템포러리", addr: "서울 강남구 테헤란로 231 (조선 팰리스 36층)",
+                isFavorite: false
+            },
+            {
+                id: 41, name: "익스퀴진 (Exquisine)", star: "1 Stars", food: "컨템포러리", addr: "서울 강남구 삼성로140길 6",
+                isFavorite: false
+            },
+            {
+                id: 42, name: "제로 컴플렉스", star: "1 Stars", food: "이노베이티브", addr: "서울 중구 퇴계로6가길 30 3층",
+                isFavorite: false
+            }
+        ];
+
+        // [연동 함수] 마커 클릭 시 실행
+        function findAndShowRestaurant(targetName) {
+            // 필터 초기화
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            document.querySelector('[data-group="all"]').classList.add('active');
+            renderList(restaurantsData);
+
+            // 강조 및 스크롤
+            setTimeout(() => {
+                const items = document.querySelectorAll('.restaurant-item');
+                items.forEach(item => {
+                    item.classList.remove('highlight');
+                    if (item.querySelector('.res-name').innerText.trim() === targetName.trim()) {
+                        item.classList.add('highlight');
+                        item.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                });
+            }, 100);
+        }
+
+        function toggleFilter(btn) {
+            const group = btn.getAttribute('data-group');
+            const allBtn = document.querySelector('[data-group="all"]');
+            const favBtn = document.querySelector('[data-group="fav"]');
+
+            // 1. 전체 버튼 클릭
+            if (group === 'all') {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                allBtn.classList.add('active');
+            }
+
+            // 2. 즐겨찾기 버튼 클릭 -> 다른 필터와 중복 불가
+            else if (group === 'fav') {
+                const wasActive = btn.classList.contains('active');
+
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+
+                // 이미 켜져 있던 즐겨찾기를 다시 누르면 전체로 복귀
+                if (wasActive) {
+                    allBtn.classList.add('active');
+                } else {
+                    favBtn.classList.add('active');
+                }
+            }
+
+            // 3. 일반 필터(star, cate) 클릭 -> 즐겨찾기 자동 해제
+            else {
+                allBtn.classList.remove('active');
+                if (favBtn) favBtn.classList.remove('active');
+
+                btn.classList.toggle('active');
+
+                // 아무 필터도 없으면 전체 자동 활성화
+                if (document.querySelectorAll('.filter-btn.active').length === 0) {
+                    allBtn.classList.add('active');
+                }
+            }
+
+            applyFilters();
+        }
+
+        function applyFilters() {
+            const activeBtns = document.querySelectorAll('.filter-btn.active');
+            const allBtnActive = document.querySelector('[data-group="all"]').classList.contains('active');
+
+            if (allBtnActive) {
+                renderList(restaurantsData);
+                return;
+            }
+
+            const filters = { fav: [], star: [], cate: [] };
+
+            activeBtns.forEach(btn => {
+                const group = btn.getAttribute('data-group');
+                const val = btn.getAttribute('data-value');
+
+                if (group !== 'all') {
+                    filters[group].push(val);
+                }
+            });
+
+            const filtered = restaurantsData.filter(res => {
+                const matchFav = filters.fav.length === 0 || filters.fav.includes(String(res.isFavorite));
+                const matchStar = filters.star.length === 0 || filters.star.includes(res.star);
+                const matchCate = filters.cate.length === 0 || filters.cate.includes(res.food);
+
+                return matchFav && matchStar && matchCate;
+            });
+
+            renderList(filtered);
+        }
+        // 즐겨찾기 토글 함수 추가
+        function toggleFavorite(event, id) {
+            event.stopPropagation();
+
+            const restaurant = restaurantsData.find(item => item.id === id);
+            if (restaurant) {
+                restaurant.isFavorite = !restaurant.isFavorite;
+            }
+
+            applyFilters();
+        }
+
+        function renderList(data) {
+            const listContainer = document.getElementById('restaurant-list');
+
+            if (data.length === 0) {
+                listContainer.innerHTML = `
+            <p style="text-align:center; padding:40px; color:#999;">
+                조건에 맞는 식당이 없습니다.
+            </p>
+        `;
+                return;
+            }
+
+            listContainer.innerHTML = data.map(item => `
+        <div class="restaurant-item">
+            <span class="fav-btn ${item.isFavorite ? 'active' : ''}" onclick="toggleFavorite(event, ${item.id})">
+                ${item.isFavorite ? '♥' : '♡'}
+            </span>
+
+            <div class="res-name">${item.name}</div>
+            <div class="res-address">${item.addr}</div>
+            <div class="res-info-row">
+                <span class="badge badge-star">${item.star}</span>
+                <span class="badge badge-cate">${item.food}</span>
+            </div>
+        </div>
+    `).join('');
+        }
+
+        window.onload = () => renderList(restaurantsData);
+    </script>
+</body>
+
+</html>
