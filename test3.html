@@ -158,20 +158,36 @@
             border: 1px solid var(--michelin-gold);
         }
 
-        /* 하트 CSS 추가 */
+        /* 즐겨찾기 로고 추가 */
         .fav-btn {
             position: absolute;
             top: 20px;
             right: 20px;
-            font-size: 1.5rem;
-            color: #ddd;
+            display: inline-block;
+            width: 30px;
+            height: 30px;
             cursor: pointer;
             user-select: none;
             transition: 0.2s;
+
+            background-image: url("./data/img/michelin-logo.png");
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: contain;
+
+            /* 기본은 흐리게 보여서 비활성 상태처럼 보이게 */
+            opacity: 0.35;
+            filter: grayscale(1);
+        }
+
+        .fav-btn:hover {
+            transform: scale(1.08);
         }
 
         .fav-btn.active {
-            color: var(--michelin-gold);
+            /* 즐겨찾기 되면 원래 색으로 선명하게 */
+            opacity: 1;
+            filter: none;
         }
     </style>
 </head>
@@ -504,9 +520,7 @@
 
             listContainer.innerHTML = data.map(item => `
         <div class="restaurant-item">
-            <span class="fav-btn ${item.isFavorite ? 'active' : ''}" onclick="toggleFavorite(event, ${item.id})">
-                ${item.isFavorite ? '♥' : '♡'}
-            </span>
+            <span class="fav-btn ${item.isFavorite ? 'active' : ''}" onclick="toggleFavorite(event, ${item.id})"></span>
 
             <div class="res-name">${item.name}</div>
             <div class="res-address">${item.addr}</div>
