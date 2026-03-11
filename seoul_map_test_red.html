@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>Michelin Guide 2026 - Red & Gray Selection</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root { 
+            --michelin-red: #bd1622;      
+            --michelin-dark-red: #8b1019; 
+            --michelin-bg: #fdfaf5;       
+            --michelin-dark: #1a1a1a; 
+            --map-gu-gray: #888888;       /* 지도 자체 그레이 색상 */
+            --map-gu-hover: #bbbbbb;      /* 호버 시 밝은 그레이 */
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Noto Sans KR', sans-serif; display: flex; height: 100vh; overflow: hidden; background-color: var(--michelin-bg); }
+
+        /* 왼쪽 지도 영역 - 배경은 미쉐린 레드로 유지 */
+        #map-container { 
+            flex: 6.5; 
+            position: relative; 
+            background-color: var(--michelin-red); 
+        }
+        
+        #map { width: 100%; height: 100%; background: transparent !important; }
+
+        /* 오른쪽 사이드바 */
+        #side-bar { 
+            flex: 3.5; display: flex; flex-direction: column; background: white; 
+            min-width: 400px; border-left: 2px solid var(--michelin-red); 
+        }
+        .header { padding: 35px; background: var(--michelin-red); color: white; text-align: center; }
+        .header h2 { letter-spacing: 5px; font-weight: 700; text-transform: uppercase; }
+        .header p { font-size: 0.8rem; margin-top: 5px; opacity: 0.9; }
+        
+        .filter-section { 
+            padding: 15px; background: var(--michelin-dark-red); 
+            display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; 
+        }
+        .gu-btn { 
+            padding: 6px 14px; background: rgba(255,255,255,0.15); 
+            border: 1px solid white; color: white; cursor: pointer; 
+            font-size: 0.85rem; border-radius: 2px; transition: 0.3s;
+        }
+        .gu-btn:hover { background: rgba(255,255,255,0.3); }
+        .gu-btn.active { background: white; color: var(--michelin-red); font-weight: bold; }
+
+        #restaurant-list { flex: 1; overflow-y: auto; padding: 25px; background: var(--michelin-bg); scroll-behavior: smooth; }
+        .restaurant-item { 
+            background: white; padding: 20px; margin-bottom: 20px; 
+            border: 1px solid #e0e0e0; transition: 0.4s; cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .restaurant-item:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.08); }
+        .restaurant-item.highlight { border: 2px solid var(--michelin-red); background: #fff9f9; }
+        
+        .res-name { font-size: 1.2rem; font-weight: 700; color: var(--michelin-dark); margin-bottom: 5px; }
+        .res-addr { font-size: 0.8rem; color: #777; margin-bottom: 10px; }
+        .res-badge { display: inline-block; padding: 3px 10px; font-size: 0.75rem; background: var(--michelin-red); color: white; border-radius: 2px; font-weight: 700; }
+        .res-cuisine { margin-left: 8px; font-size: 0.8rem; color: #555; font-weight: 500; }
+
+        .custom-tooltip {
+            background-color: var(--michelin-dark) !important;
+            border: 1px solid var(--michelin-red) !important;
+            color: white !important;
+            font-size: 13px !important;
+            font-weight: bold !important;
+            padding: 6px 12px !important;
+            border-radius: 4px !important;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.4) !important;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="map-container">
+        <div id="map"></div>
+    </div>
+
+    <nav id="side-bar">
+        <div class="header">
+            <h2>MICHELIN</h2>
+            <p>SEOUL SELECTION 2026</p>
+        </div>
+        <div class="filter-section" id="gu-filter">
+            <button class="gu-btn active" onclick="focusDistrict('전체', this)">전체</button>
+            <button class="gu-btn" onclick="focusDistrict('강남구', this)">강남구</button>
+            <button class="gu-btn" onclick="focusDistrict('용산구', this)">용산구</button>
+            <button class="gu-btn" onclick="focusDistrict('중구', this)">중구</button>
+            <button class="gu-btn" onclick="focusDistrict('종로구', this)">종로구</button>
+            <button class="gu-btn" onclick="focusDistrict('송파구', this)">송파구</button>
+            <button class="gu-btn" onclick="focusDistrict('성동구', this)">성동구</button>
+        </div>
+        <div id="restaurant-list"></div>
+    </nav>
+
+    <script>
+        let map, geojsonLayer;
+        const targetGus = ['강남구', '용산구', '중구', '종로구', '송파구', '성동구'];
+        
+        const restaurantsData = [
+            { id: 1, name: "밍글스 (Mingles)", star: "3 Stars", cuisine: "한식", addr: "서울 강남구 선릉로132길 19", gu: "강남구" },
+            { id: 2, name: "모수 (Mosu)", star: "2 Stars", cuisine: "이노베이티브", addr: "서울 용산구 이태원로 191", gu: "용산구" },
+            { id: 3, name: "소수헌 (Sosuheon)", star: "2 Stars", cuisine: "스시", addr: "서울 강남구 도산대로45길 8-5", gu: "강남구" },
+            { id: 4, name: "권숙수 (KwonSookSoo)", star: "2 Stars", cuisine: "한식", addr: "서울 강남구 압구정로46길 27", gu: "강남구" },
+            { id: 5, name: "라연 (La Yeon)", star: "2 Stars", cuisine: "한식", addr: "서울 중구 동호로 249", gu: "중구" },
+            { id: 6, name: "레스토랑 알렌 (Restaurant Allen)", star: "2 Stars", cuisine: "컨템포러리", addr: "서울 강남구 테헤란로 231", gu: "강남구" },
+            { id: 7, name: "미토우 (Mitou)", star: "2 Stars", cuisine: "일식", addr: "서울 강남구 언주로154길 14", gu: "강남구" },
+            { id: 8, name: "스와니예 (Soigné)", star: "2 Stars", cuisine: "컨템포러리", addr: "서울 강남구 강남대로 652", gu: "강남구" },
+            { id: 9, name: "알라 프리마 (alla prima)", star: "2 Stars", cuisine: "이노베이티브", addr: "서울 강남구 학동로17길 13", gu: "강남구" },
+            { id: 10, name: "에빗 (Evett)", star: "2 Stars", cuisine: "이노베이티브", addr: "서울 강남구 도산대로45길 10-5", gu: "강남구" },
+            { id: 11, name: "정식당 (Jungsik)", star: "2 Stars", cuisine: "컨템포러리", addr: "서울 강남구 선릉로158길 11", gu: "강남구" },
+            { id: 12, name: "기와강 (GiwaKang)", star: "1 Star", cuisine: "한식", addr: "서울 종로구 율곡로 33", gu: "종로구" },
+            { id: 13, name: "레스토랑 산 (SAN)", star: "1 Star", cuisine: "이노베이티브", addr: "서울 용산구 독서당로 111", gu: "용산구" },
+            { id: 14, name: "스시 카네사카 (Sushi Kanesaka)", star: "1 Star", cuisine: "스시", addr: "서울 중구 남대문로 73", gu: "중구" },
+            { id: 15, name: "꼴라쥬 (Collage)", star: "1 Star", cuisine: "프렌치", addr: "서울 용산구 독서당로 29길 5-6", gu: "용산구" },
+            { id: 16, name: "가겐 바이 최준호 (GAGGEN)", star: "1 Star", cuisine: "일식", addr: "서울 강남구 언주로164길 24", gu: "강남구" },
+            { id: 17, name: "레스토랑 주은 (JUEUN)", star: "1 Star", cuisine: "한식", addr: "서울 종로구 경희궁길 36", gu: "종로구" },
+            { id: 18, name: "하쿠시 (Hakusi)", star: "1 Star", cuisine: "일식", addr: "서울 강남구 도산대로15길 32-10", gu: "강남구" },
+            { id: 19, name: "강민철 레스토랑", star: "1 Star", cuisine: "프렌치", addr: "서울 강남구 도산대로68길 18", gu: "강남구" },
+            { id: 20, name: "고료리 켄", star: "1 Star", cuisine: "컨템포러리", addr: "서울 강남구 언주로152길 11-5", gu: "강남구" },
+            { id: 21, name: "기가스 (Gigas)", star: "1 Star", cuisine: "지중해식", addr: "서울 강남구 도산대로45길 8-7", gu: "강남구" },
+            { id: 22, name: "뛰뚜아멍", star: "1 Star", cuisine: "프렌치", addr: "서울 강남구 강남대로160길 35-5", gu: "강남구" },
+            { id: 23, name: "라망 시크레", star: "1 Star", cuisine: "컨템포러리", addr: "서울 중구 퇴계로 67", gu: "중구" },
+            { id: 24, name: "라미띠에", star: "1 Star", cuisine: "프렌치", addr: "서울 강남구 언주로153길 7", gu: "강남구" },
+            { id: 25, name: "레귬 (Légume)", star: "1 Star", cuisine: "비건", addr: "서울 강남구 강남대로162길 36", gu: "강남구" },
+            { id: 26, name: "무니 (Muni)", star: "1 Star", cuisine: "일식", addr: "서울 강남구 도산대로72길 16", gu: "강남구" },
+            { id: 27, name: "무오키 (Muoki)", star: "1 Star", cuisine: "컨템포러리", addr: "서울 강남구 학동로55길 12-12", gu: "강남구" },
+            { id: 28, name: "비채나", star: "1 Star", cuisine: "한식", addr: "서울 송파구 올림픽로 300", gu: "송파구" },
+            { id: 29, name: "빈호 (VINHO)", star: "1 Star", cuisine: "컨템포러리", addr: "서울 강남구 학동로43길 38", gu: "강남구" },
+            { id: 30, name: "세븐스 도어 (7th Door)", star: "1 Star", cuisine: "컨템포러리", addr: "서울 강남구 학동로97길 41", gu: "강남구" },
+            { id: 31, name: "소설한남", star: "1 Star", cuisine: "한식", addr: "서울 용산구 한남대로20길 21", gu: "용산구" },
+            { id: 32, name: "소울 (Soul)", star: "1 Star", cuisine: "컨템포러리", addr: "서울 용산구 신흥로26길 35", gu: "용산구" },
+            { id: 33, name: "솔밤 (Solbam)", star: "1 Star", cuisine: "컨템포러리", addr: "서울 강남구 삼성로126길 6", gu: "강남구" },
+            { id: 34, name: "스시 마츠모토", star: "1 Star", cuisine: "스시", addr: "서울 강남구 도산대로49길 6-7", gu: "강남구" },
+            { id: 35, name: "에스콘디도 (Escondido)", star: "1 Star", cuisine: "멕시칸", addr: "서울 용산구 독서당로 103", gu: "용산구" },
+            { id: 36, name: "온지음", star: "1 Star", cuisine: "한식", addr: "서울 종로구 효자로 33", gu: "종로구" },
+            { id: 37, name: "유 유안 (Yu Yuan)", star: "1 Star", cuisine: "중식", addr: "서울 종로구 새문안로 97", gu: "종로구" },
+            { id: 38, name: "윤서울 (YUN)", star: "1 Star", cuisine: "한식", addr: "서울 강남구 선릉로805", gu: "강남구" },
+            { id: 39, name: "이스트 (y'east)", star: "1 Star", cuisine: "컨템포러리", addr: "서울 성동구 성수이로7길 27", gu: "성동구" },
+            { id: 40, name: "이타닉 가든", star: "1 Star", cuisine: "컨템포러리", addr: "서울 강남구 테헤란로 231", gu: "강남구" },
+            { id: 41, name: "익스퀴진 (Exquisine)", star: "1 Star", cuisine: "컨템포러리", addr: "서울 강남구 삼성로140길 6", gu: "강남구" },
+            { id: 42, name: "제로 컴플렉스", star: "1 Star", cuisine: "이노베이티브", addr: "서울 중구 퇴계로6가길 30", gu: "중구" }
+        ];
+
+
+        function initMap() {
+            map = L.map('map', { zoomControl: false, attributionControl: false }).setView([37.5665, 126.9780], 11);
+            loadData();
+            renderList('전체');
+        }
+
+        async function loadData() {
+            try {
+                const mapRes = await fetch('./data/geo/team_pro_seoul_map_4326.geojson');
+                const mapData = await mapRes.json();
+
+                geojsonLayer = L.geoJson(mapData, {
+                    style: (feature) => {
+                        const isTarget = targetGus.includes(feature.properties.SIG_KOR_NM);
+                        return {
+                            fillColor: '#eeeeee', // [수정] 지도 내부 색상을 연한 그레이로 변경
+                            color: '#ffffff',     // 경계선 화이트
+                            weight: 1.5, 
+                            fillOpacity: isTarget ? 1 : 1 // [수정] 타겟 구는 0.7, 아니면 0.2로 투명도 설정
+                        };
+                    },
+                    onEachFeature: (feature, layer) => {
+                        const guName = feature.properties.SIG_KOR_NM;
+                        if (targetGus.includes(guName)) {
+                            layer.on({
+                                mouseover: (e) => e.target.setStyle({ fillColor: '#bbbbbb', fillOpacity: 1, weight: 3 }),
+                                mouseout: (e) => e.target.setStyle({ fillColor: '#888888', fillOpacity: 1, weight: 1.5 }),
+                                click: (e) => focusDistrict(guName, null)
+                            });
+                        } else {
+                            layer.options.interactive = false; 
+                        }
+                    }
+                }).addTo(map);
+
+                const pointRes = await fetch('./data/geo/team_pro_michelin_point_4326.geojson');
+                const pointData = await pointRes.json();
+                
+                L.geoJson(pointData, {
+                    pointToLayer: (feature, latlng) => {
+                        const icon = L.icon({ iconUrl: './data/logo.png', iconSize: [25, 25] });
+                        const marker = L.marker(latlng, { icon: icon });
+                        
+                        const props = feature.properties;
+                        let resName = "미식당";
+                        Object.keys(props).forEach(key => {
+                            if (key.includes('레스토')) { resName = props[key]; }
+                        });
+                        
+                        marker.bindTooltip(resName, {
+                            direction: 'top',
+                            offset: [0, -10],
+                            className: 'custom-tooltip'
+                        });
+
+                        marker.on('click', () => highlightInList(resName));
+                        return marker;
+                    }
+                }).addTo(map);
+
+            } catch (e) { console.error("Data Load Error:", e); }
+        }
+
+        function focusDistrict(guName, btn) {
+            document.querySelectorAll('.gu-btn').forEach(b => {
+                b.classList.remove('active');
+                if(b.innerText === guName) b.classList.add('active');
+            });
+
+            if (guName !== '전체') {
+                geojsonLayer.eachLayer(layer => {
+                    if (layer.feature.properties.SIG_KOR_NM === guName) {
+                        map.fitBounds(layer.getBounds(), { padding: [50, 50] });
+                    }
+                });
+            } else {
+                map.setView([37.5665, 126.9780], 11);
+            }
+            renderList(guName);
+        }
+
+        function renderList(filterGu) {
+            const listContainer = document.getElementById('restaurant-list');
+            const filtered = filterGu === '전체' ? restaurantsData : restaurantsData.filter(r => r.gu === filterGu);
+            listContainer.innerHTML = filtered.map(item => `
+                <div class="restaurant-item" data-name="${item.name}">
+                    <div class="res-name">${item.name}</div>
+                    <div class="res-addr">${item.addr}</div>
+                    <div class="res-badge">${item.star}</div>
+                    <span class="res-cuisine">${item.cuisine}</span>
+                </div>
+            `).join('');
+        }
+
+        function highlightInList(name) {
+            const items = document.querySelectorAll('.restaurant-item');
+            items.forEach(item => {
+                item.classList.remove('highlight');
+                if (name.includes(item.dataset.name) || item.dataset.name.includes(name)) {
+                    item.classList.add('highlight');
+                    item.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            });
+        }
+
+        window.onload = initMap;
+    </script>
+</body>
+</html>
