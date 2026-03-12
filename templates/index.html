@@ -117,7 +117,7 @@
         async function loadData() {
             try {
                 // Flask static 폴더 규칙에 따른 절대 경로 설정
-                const mapRes = await fetch('/static/data/geo/team_pro_seoul_map_4326.geojson');
+                const mapRes = await fetch('/static/GeoJSON/team_pro_seoul_map_4326.geojson');
                 if (!mapRes.ok) throw new Error("Seoul Map GeoJSON 로딩 실패");
                 const mapData = await mapRes.json();
 
@@ -148,14 +148,14 @@
                     }
                 }).addTo(map);
 
-                const pointRes = await fetch('/static/data/geo/team_pro_michelin_point_4326.geojson');
+                const pointRes = await fetch('/static/GeoJSON/team_pro_michelin_point_4326.geojson');
                 if (!pointRes.ok) throw new Error("Michelin Point GeoJSON 로딩 실패");
                 const pointData = await pointRes.json();
                 
                 L.geoJson(pointData, {
                     pointToLayer: (feature, latlng) => {
                         const icon = L.icon({ 
-                            iconUrl: '/static/data/logo.png', 
+                            iconUrl: '/static/img/logo.png', 
                             iconSize: [25, 25] 
                         });
                         const marker = L.marker(latlng, { icon: icon });

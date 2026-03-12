@@ -34,12 +34,12 @@ def index():
             """
             cursor.execute(sql)
             restaurants = cursor.fetchall()
-            
+
             # 구(gu) 정보 추출
             for res in restaurants:
                 addr_parts = res['addr'].split()
                 res['gu'] = addr_parts[1] if len(addr_parts) > 1 else "기타"
-                
+
     except Exception as e:
         print(f"DB Error: {e}")
     finally:
