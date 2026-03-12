@@ -191,7 +191,7 @@
                 
                 L.geoJson(pointData, {
                     pointToLayer: (feature, latlng) => {
-                        const icon = L.icon({ iconUrl: './data/logo.png', iconSize: [25, 25] });
+                        const icon = L.icon({ iconUrl: './data/logo.png', iconSize: [20, 20] });
                         const marker = L.marker(latlng, { icon: icon });
                         
                         // [마커 라벨 오류 수정] 모든 키를 검사하여 '레스토' 키워드가 들어간 실제 식당명 추출
