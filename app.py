@@ -20,12 +20,10 @@ def get_db_connection():
 
 @app.route('/')
 def index():
-    # 1. DB에서 식당 데이터 조회
-    restaurants = []
+    restaurants = []  # 기본값 설정
     try:
         conn = get_db_connection()
         with conn.cursor() as cursor:
-            # SQL 파일의 테이블명과 컬럼명에 맞춰 쿼리 작성
             sql = """
             SELECT 
                 restaurant_name AS name, 
@@ -37,9 +35,8 @@ def index():
             cursor.execute(sql)
             restaurants = cursor.fetchall()
             
-            # 주소에서 '구' 정보 추출하여 데이터에 추가 (필터링용)
+            # 구(gu) 정보 추출
             for res in restaurants:
-                # '서울 강남구 ...' 에서 '강남구'만 추출
                 addr_parts = res['addr'].split()
                 res['gu'] = addr_parts[1] if len(addr_parts) > 1 else "기타"
                 
@@ -49,7 +46,7 @@ def index():
         if 'conn' in locals():
             conn.close()
 
-    # 2. 조회된 데이터를 HTML(index.html)로 넘겨줌
+    # 데이터가 비어있어도 restaurants 변수는 반드시 전달됨
     return render_template('index.html', restaurants=restaurants)
 
 if __name__ == '__main__':

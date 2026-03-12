@@ -101,8 +101,8 @@
         let map, geojsonLayer;
         const targetGus = ['강남구', '용산구', '중구', '종로구', '송파구', '성동구'];
         
-        // Flask(app.py)에서 전달받은 실제 SQL 데이터
-        const restaurantsData = {{ restaurants | tojson }};
+        // [수정 포인트] | tojson | safe 필터를 추가하여 Syntax Error를 방지합니다.
+        const restaurantsData = JSON.parse('{{ restaurants | tojson | safe }}');
 
         function initMap() {
             map = L.map('map', { 
@@ -116,8 +116,9 @@
 
         async function loadData() {
             try {
-                // 1. 서울 구 경계 로드
+                // Flask static 폴더 규칙에 따른 절대 경로 설정
                 const mapRes = await fetch('/static/data/geo/team_pro_seoul_map_4326.geojson');
+                if (!mapRes.ok) throw new Error("Seoul Map GeoJSON 로딩 실패");
                 const mapData = await mapRes.json();
 
                 geojsonLayer = L.geoJson(mapData, {
@@ -147,8 +148,8 @@
                     }
                 }).addTo(map);
 
-                // 2. 미쉐린 식당 포인트 로드
                 const pointRes = await fetch('/static/data/geo/team_pro_michelin_point_4326.geojson');
+                if (!pointRes.ok) throw new Error("Michelin Point GeoJSON 로딩 실패");
                 const pointData = await pointRes.json();
                 
                 L.geoJson(pointData, {
@@ -159,8 +160,9 @@
                         });
                         const marker = L.marker(latlng, { icon: icon });
                         
-                        // [수정] 식당 이름 필드를 'name'으로 명시적으로 지정
-                        const resName = feature.properties['name'] || "정보 없음";
+                        // 파일 데이터에 맞춰 필드명 유연하게 처리
+                        const props = feature.properties;
+                        let resName = props['name'] || props['레스토'] || "정보 없음";
                         
                         marker.bindTooltip(resName, {
                             direction: 'top',
@@ -174,7 +176,7 @@
                 }).addTo(map);
 
             } catch (e) { 
-                console.error("데이터 로딩 실패:", e); 
+                console.error("지도를 불러오는 중 오류 발생:", e); 
             }
         }
 
@@ -213,13 +215,11 @@
             `).join('');
         }
 
-        // 마커 클릭 시 해당 식당 아이템 강조
         function highlightInList(targetName) {
             const items = document.querySelectorAll('.restaurant-item');
             items.forEach(item => {
                 item.classList.remove('highlight');
-                // 리스트 아이템의 data-name과 마커의 이름을 비교
-                if (item.dataset.name === targetName) {
+                if (item.dataset.name === targetName || targetName.includes(item.dataset.name)) {
                     item.classList.add('highlight');
                     item.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }
