@@ -2,33 +2,30 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>Michelin Guide 2026 - Red & Gray Selection</title>
+    <title>Michelin Guide 2026 - Red & Cream Selection</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;700&display=swap" rel="stylesheet">
     
     <style>
         :root { 
-            --michelin-red: #bd1622;      
-            --michelin-dark-red: #8b1019; 
+            --michelin-red: #6C262A;      /* 메인 다크 레드 */
+            --michelin-dark-red: #6C262A; 
             --michelin-bg: #fdfaf5;       
             --michelin-dark: #1a1a1a; 
-            --map-gu-gray: #888888;       /* 지도 자체 그레이 색상 */
-            --map-gu-hover: #bbbbbb;      /* 호버 시 밝은 그레이 */
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Noto Sans KR', sans-serif; display: flex; height: 100vh; overflow: hidden; background-color: var(--michelin-bg); }
 
-        /* 왼쪽 지도 영역 - 배경은 미쉐린 레드로 유지 */
+        /* 왼쪽 지도 영역 설정 */
         #map-container { 
             flex: 6.5; 
             position: relative; 
             background-color: var(--michelin-red); 
         }
-        
         #map { width: 100%; height: 100%; background: transparent !important; }
 
-        /* 오른쪽 사이드바 */
+        /* 오른쪽 사이드바 및 리스트 설정 */
         #side-bar { 
             flex: 3.5; display: flex; flex-direction: column; background: white; 
             min-width: 400px; border-left: 2px solid var(--michelin-red); 
@@ -37,6 +34,7 @@
         .header h2 { letter-spacing: 5px; font-weight: 700; text-transform: uppercase; }
         .header p { font-size: 0.8rem; margin-top: 5px; opacity: 0.9; }
         
+        /* 상단 지역구 필터 버튼 */
         .filter-section { 
             padding: 15px; background: var(--michelin-dark-red); 
             display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; 
@@ -63,6 +61,7 @@
         .res-badge { display: inline-block; padding: 3px 10px; font-size: 0.75rem; background: var(--michelin-red); color: white; border-radius: 2px; font-weight: 700; }
         .res-cuisine { margin-left: 8px; font-size: 0.8rem; color: #555; font-weight: 500; }
 
+        /* 마커 호버 시 나타나는 툴팁 스타일 */
         .custom-tooltip {
             background-color: var(--michelin-dark) !important;
             border: 1px solid var(--michelin-red) !important;
@@ -102,6 +101,7 @@
         let map, geojsonLayer;
         const targetGus = ['강남구', '용산구', '중구', '종로구', '송파구', '성동구'];
         
+        // 제공된 SQL 데이터를 기반으로 한 식당 상세 정보 리스트
         const restaurantsData = [
             { id: 1, name: "밍글스 (Mingles)", star: "3 Stars", cuisine: "한식", addr: "서울 강남구 선릉로132길 19", gu: "강남구" },
             { id: 2, name: "모수 (Mosu)", star: "2 Stars", cuisine: "이노베이티브", addr: "서울 용산구 이태원로 191", gu: "용산구" },
@@ -147,15 +147,17 @@
             { id: 42, name: "제로 컴플렉스", star: "1 Star", cuisine: "이노베이티브", addr: "서울 중구 퇴계로6가길 30", gu: "중구" }
         ];
 
-
+        // 지도 초기화 함수
         function initMap() {
             map = L.map('map', { zoomControl: false, attributionControl: false }).setView([37.5665, 126.9780], 11);
             loadData();
             renderList('전체');
         }
 
+        // 데이터 로드 및 레이어 생성 함수
         async function loadData() {
             try {
+                // 1. 서울 구 경계 GeoJSON 로드
                 const mapRes = await fetch('./data/geo/team_pro_seoul_map_4326.geojson');
                 const mapData = await mapRes.json();
 
@@ -163,26 +165,27 @@
                     style: (feature) => {
                         const isTarget = targetGus.includes(feature.properties.SIG_KOR_NM);
                         return {
-                            fillColor: '#eeeeee', // [수정] 지도 내부 색상을 연한 그레이로 변경
-                            color: '#ffffff',     // 경계선 화이트
-                            weight: 1.5, 
-                            fillOpacity: isTarget ? 1 : 1 // [수정] 타겟 구는 0.7, 아니면 0.2로 투명도 설정
+                            fillColor: '#fdfaf5', // 지도의 기본 크림색
+                            color: '#6C262A',     // 구 경계 테두리 (다크 레드)
+                            weight: 1.2, 
+                            fillOpacity: isTarget ? 1 : 0.9
                         };
                     },
                     onEachFeature: (feature, layer) => {
                         const guName = feature.properties.SIG_KOR_NM;
                         if (targetGus.includes(guName)) {
                             layer.on({
-                                mouseover: (e) => e.target.setStyle({ fillColor: '#bbbbbb', fillOpacity: 1, weight: 3 }),
-                                mouseout: (e) => e.target.setStyle({ fillColor: '#888888', fillOpacity: 1, weight: 1.5 }),
+                                mouseover: (e) => e.target.setStyle({ fillColor: '#ffffff', weight: 2.5 }), // 호버 시 화이트
+                                mouseout: (e) => e.target.setStyle({ fillColor: '#fdfaf5', weight: 1.2 }),
                                 click: (e) => focusDistrict(guName, null)
                             });
                         } else {
-                            layer.options.interactive = false; 
+                            layer.options.interactive = false; // 미보유 구 클릭 차단
                         }
                     }
                 }).addTo(map);
 
+                // 2. 미쉐린 식당 좌표 GeoJSON 로드
                 const pointRes = await fetch('./data/geo/team_pro_michelin_point_4326.geojson');
                 const pointData = await pointRes.json();
                 
@@ -191,12 +194,14 @@
                         const icon = L.icon({ iconUrl: './data/logo.png', iconSize: [25, 25] });
                         const marker = L.marker(latlng, { icon: icon });
                         
+                        // [마커 라벨 오류 수정] 모든 키를 검사하여 '레스토' 키워드가 들어간 실제 식당명 추출
                         const props = feature.properties;
-                        let resName = "미식당";
+                        let resName = "정보 없음";
                         Object.keys(props).forEach(key => {
-                            if (key.includes('레스토')) { resName = props[key]; }
+                            if (key.includes('name')) { resName = props[key]; }
                         });
                         
+                        // 마커에 툴팁 바인딩
                         marker.bindTooltip(resName, {
                             direction: 'top',
                             offset: [0, -10],
@@ -208,9 +213,10 @@
                     }
                 }).addTo(map);
 
-            } catch (e) { console.error("Data Load Error:", e); }
+            } catch (e) { console.error("데이터 로드 중 오류 발생:", e); }
         }
 
+        // 구 선택 및 지도 이동 함수
         function focusDistrict(guName, btn) {
             document.querySelectorAll('.gu-btn').forEach(b => {
                 b.classList.remove('active');
@@ -229,6 +235,7 @@
             renderList(guName);
         }
 
+        // 오른쪽 사이드바 리스트 렌더링 함수
         function renderList(filterGu) {
             const listContainer = document.getElementById('restaurant-list');
             const filtered = filterGu === '전체' ? restaurantsData : restaurantsData.filter(r => r.gu === filterGu);
@@ -242,6 +249,7 @@
             `).join('');
         }
 
+        // 마커 클릭 시 리스트에서 해당 식당 강조 및 이동
         function highlightInList(name) {
             const items = document.querySelectorAll('.restaurant-item');
             items.forEach(item => {
