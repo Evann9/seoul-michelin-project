@@ -3,13 +3,101 @@
 <head>
     <meta charset="UTF-8">
     <title>Michelin Guide - Complete with DB & Favorites</title>
+    <!--지도 도구와 폰트를 위한 작업-->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;700&display=swap" rel="stylesheet">
+    
     <style>
+        /*지도를 위한 CSS 적용*/
+        :root { 
+            --michelin-red: #6C262A;      /* 메인 레드 */
+            --michelin-dark-red: #4A1A1D; 
+            --michelin-bg: #fdfaf5;       
+            --michelin-dark: #1a1a1a; 
+        }
+
+        /* 지도 컨테이너 스타일 */
+        #map-container { 
+            width: 100%; 
+            height: 100%; 
+            position: relative; 
+            background-color: var(--michelin-red); 
+        }
+
+        #gu-filter-bar {
+            transition: top 0.4s ease, opacity 0.4s ease;
+            opacity: 1;
+        }
+        .gu-btn {
+            padding: 8px 16px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+            color: #555;
+            transition: all 0.3s ease;
+        }
+
+        .gu-btn:hover {
+            background: #f8f8f8;
+            border-color: var(--michelin-red);
+            color: var(--michelin-red);
+        }
+
+        .gu-btn.active {
+            background: var(--michelin-red);
+            color: white;
+            border-color: var(--michelin-red);
+        }   
+        
+        #gu-filter-bar.hide {
+            top: -100px !important; 
+            opacity: 0;
+        }
+
+        #map { width: 100%; height: 100%; background: transparent !important; }
+        /* 마커를 올렸을 때 나오는 툴팁 스타일 */
+        .custom-tooltip {
+            background-color: var(--michelin-dark) !important;
+            border: 1px solid var(--michelin-red) !important;
+            color: white !important;
+            font-size: 13px !important;
+            font-weight: bold !important;
+            padding: 6px 12px !important;
+            border-radius: 4px !important;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.4) !important;
+        }
+
+
         body { margin: 0; padding: 0; font-family: 'Arial', sans-serif; display: flex; height: 100vh; background-color: #f4f4f4; }
         
-        .left-panel { flex: 6; background-color: #e8e8e8; display: flex; justify-content: center; align-items: center; border-right: 2px solid #ccc; position: relative; overflow: hidden; }
-        #map-view { display: flex; justify-content: center; align-items: center; width: 100%; height: 100%; text-align: center; font-size: 2rem; color: #666; }
-        #detail-view { display: none; width: 100%; height: 100%; background: white; padding: 50px; box-sizing: border-box; overflow-y: auto; position: relative; }
+        .left-panel { flex: 6.5; background-color: #e8e8e8; display: flex; justify-content: center; align-items: center; border-right: 2px solid #6C262A; position: relative; overflow: hidden; }
         
+
+        #detail-view {
+            display: block; /* 항상 block으로 두되 */
+            position: absolute;
+            top: 0;
+            right: -100%; /* 처음엔 화면 오른쪽 바깥에 숨겨둠 */
+            width: 100%;
+            height: 100%;
+            background: white;
+            padding: 50px;
+            box-sizing: border-box;
+            overflow-y: auto;
+            transition: right 0.4s ease-out, opacity 0.4s ease; /* 0.4초 동안 부드럽게! */
+            opacity: 0;
+            z-index: 5;
+        }
+
+        /* 상세 화면이 활성화되었을 때 붙여줄 이름표 */
+        #detail-view.active {
+            right: 0; /* 화면 안으로 들어옴 */
+            opacity: 1;
+        }        
+
         .back-btn { padding: 10px 15px; background: #333; color: white; border: none; border-radius: 5px; cursor: pointer; margin-bottom: 20px; font-size: 1rem; }
         .back-btn:hover { background: #555; }
         .detail-title { font-size: 3rem; color: #a21927; margin: 0 0 10px 0; display: inline-block;}
@@ -18,8 +106,8 @@
 
         #detail-favorite-btn { font-size: 2.5rem; background: none; border: none; cursor: pointer; margin-left: 20px; vertical-align: super; }
 
-        .right-panel { flex: 4; display: flex; flex-direction: column; background-color: white; height: 100%; }
-        .filter-section { padding: 20px; background-color: #a21927; color: white; z-index: 10; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .right-panel { flex: 3.5; display: flex; flex-direction: column; background-color: #FDFAF5; height: 100%;}
+        .filter-section { padding: 20px; background-color: #6C262A; color: white; z-index: 10; }
         .filter-buttons { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px;}
         
         .btn { padding: 8px 16px; border: none; background: rgba(255,255,255,0.2); color: white; border-radius: 30px; font-weight: 600; cursor: pointer; transition: 0.2s; }
@@ -37,34 +125,81 @@
         .filter-tag span:hover { color: red; }
         
         .list-section { flex: 1; overflow-y: auto; padding: 20px; }
-        .restaurant-card { border: 1px solid #ddd; padding: 15px; margin-bottom: 15px; border-radius: 8px; cursor: pointer; transition: 0.2s; position: relative;}
+        .restaurant-card { border: 1px solid #ddd; padding: 15px; margin-bottom: 15px; border-radius: 8px; cursor: pointer; transition: 0.2s; position: relative; background-color: white;}
         .restaurant-card:hover { border-color: #a21927; box-shadow: 0 2px 8px rgba(162, 25, 39, 0.2); background-color: #fdf5f6; }
         
         .card-favorite-icon { position: absolute; top: 15px; right: 15px; font-size: 1.5rem; }
 
         /* 예약 모달 스타일 */
-        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 100; justify-content: center; align-items: center; }
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; justify-content: center; align-items: center; }
         .modal-content { background: white; padding: 30px; border-radius: 10px; width: 300px; display: flex; flex-direction: column; gap: 15px; }
         .modal-content input, .modal-content select { padding: 10px; border: 1px solid #ccc; border-radius: 5px; }
         .modal-content button { padding: 10px; background: #a21927; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        
+        button {
+            user-select: none;
+            -webkit-user-select: none; /* 버튼에 텍스트 드래그 방지 */
+        }
+        
+        /* =======버튼 호버 효과========= */
+        /* 일반적인 버튼 상태 */
+        .time-btn {
+            transition: all 0.2s ease; /* 색이 변할 때 0.2초 동안 부드럽게! */
+        }
+
+        /* 마우스를 올렸을 때 (Hover) */
+        .time-btn:hover:not(:disabled) {
+            background-color: #fceced !important; /* 연한 붉은색 배경 */
+            border-color: #a21927 !important;     /* 테두리는 강조색으로 */
+            color: #a21927 !important;            /* 글자색도 강조색으로 */
+            transform: translateY(-2px);          /* 버튼이 살짝 위로 떠오르는 효과! */
+        }
+
+        /* 예약 불가(disabled)인 버튼은 호버 효과가 안 나게 막기 */
+        .time-btn:disabled {
+            cursor: not-allowed;
+        }
+        
+
+
     </style>
 </head>
 <body>
 
     <div class="left-panel">
-        <div id="map-view">🗺️ 지도 화면</div>
-        
+        <div id="map-container">
+                <div id="map"></div>
+        </div>
+
+        <div id="gu-filter-bar" style="position: absolute; top: 20px; left: 50%; transform: translateX(-50%); z-index: 1000; background: rgba(255, 255, 255, 0.95); padding: 10px 20px; border-radius: 50px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); display: flex; gap: 10px; white-space: nowrap;">
+            <button class="gu-btn active" onclick="focusDistrict('전체', this)">전체</button>
+            <button class="gu-btn" onclick="focusDistrict('강남구', this)">강남구</button>
+            <button class="gu-btn" onclick="focusDistrict('용산구', this)">용산구</button>
+            <button class="gu-btn" onclick="focusDistrict('중구', this)">중구</button>
+            <button class="gu-btn" onclick="focusDistrict('종로구', this)">종로구</button>
+            <button class="gu-btn" onclick="focusDistrict('송파구', this)">송파구</button>
+            <button class="gu-btn" onclick="focusDistrict('성동구', this)">성동구</button>
+        </div>
+            
         <div id="detail-view">
             <button onclick="showMap()" class="back-btn">⬅️ 지도로 돌아가기</button>
             <br>
             <h1 id="dt-name" class="detail-title">이름</h1>
             <button id="detail-favorite-btn" onclick="toggleFavoriteFromDetail()">🤍</button>
-            
             <h3 id="dt-info">정보</h3>
             <h3 id="dt-stars" class="res-stars">별점</h3>
             <p id="dt-desc" class="detail-desc">설명</p>
             <hr style="border: 0; height: 1px; background: #eee; margin: 20px 0;">
-            <button onclick="openReservationModal()" style="width:100%; padding:15px; background:#a21927; color:white; border:none; border-radius:5px; font-weight:bold; cursor:pointer; font-size:1.1rem;">🗓️ 예약하기</button>
+            <button onclick="openReservationModal()" style="width:100%; padding:15px; background:var(--michelin-red); color:white; border:none; border-radius:5px; font-weight:bold; cursor:pointer; font-size:1.1rem;">🗓️ 예약하기</button>
+        </div>
+
+        <div style="position: absolute; bottom: 20px; left: 20px; z-index: 1000; display: flex; gap: 10px;">
+            <button id="reset-res-btn" class="btn" style="background-color: #555; color: white; padding: 10px 15px; border-radius: 5px; border: none; cursor: pointer; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">
+                🗑️ 예약 초기화
+            </button>
+            <button onclick="openAdmin()" class="btn" style="background-color: #333; color: white; padding: 10px 15px; border-radius: 5px; border: none; cursor: pointer; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">
+                📊 관리자 모드
+            </button>
         </div>
     </div>
 
@@ -101,30 +236,96 @@
             <p style="color:#777; text-align:center;">목록을 불러오는 중입니다...</p>
         </div>
     </div>
-
+    <!--예약하기 모달-->
     <div id="reservation-modal" class="modal-overlay">
-        <div class="modal-content">
-            <h3 style="margin-top:0;">예약하기</h3>
-            <input type="text" id="res-name" placeholder="예약자 이름">
-            <input type="text" id="res-phone" placeholder="전화번호 (010-0000-0000)">
-            <div id="time-slot-container" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 15px 0;"></div>
-            <input type="hidden" id="selected-time-value">
-            <button onclick="submitReservation()">예약 확정</button>
-            <button onclick="closeModal()" style="background:#888;">취소</button>
+        <div class="modal-content" style="width: 350px;">
+            <h3 style="margin: 0 0 15px 0; text-align: center; color: #a21927;">📅 예약 관리 시스템</h3>
+            
+            <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                <label style="font-size: 0.8rem; color: #666;">예약 정보 입력</label>
+                <input type="text" id="res-name" placeholder="성함을 입력해주세요" style="width: 100%; margin-top: 5px; box-sizing: border-box;">
+                <input type="text" id="res-phone" placeholder="전화번호 (010-0000-0000)" style="width: 100%; margin-top: 10px; box-sizing: border-box;">
+            </div>
+
+            <div style="margin-bottom: 15px;">
+                <label style="font-size: 0.8rem; color: #666;">시간 선택 (필수)</label>
+                <div id="time-slot-container" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 5px;"></div>
+                <input type="hidden" id="selected-time-value">
+            </div>
+
+            <hr style="border: 0; border-top: 1px solid #eee; margin: 10px 0;">
+
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                <button onclick="submitReservation()" style="background: #a21927; font-weight: bold; padding: 12px;">✅ 예약 확정하기</button>
+                <button onclick="cancelReservation()" style="background: #555; padding: 10px;">❌ 기존 예약 취소하기</button>
+                <button onclick="closeModal()" style="background: #ccc; color: #333; padding: 8px;">닫기</button>
+            </div>
+        </div>
+    </div>
+    <!--예약 확정 모달-->
+    <div id="success-modal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 1001;">
+        <div style="background: white; padding: 30px; border-radius: 15px; text-align: center; width: 300px; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
+            <div style="font-size: 50px; margin-bottom: 10px;">✅</div>
+            <h2 style="margin-bottom: 10px; color: #a21927;">예약 완료!</h2>
+            <p id="success-message" style="margin-bottom: 20px; line-height: 1.5; color: #555;">
+                </p>
+            <button onclick="closeSuccessModal()" style="background: #a21927; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; width: 100%;">확인</button>
+        </div>
+    </div>
+        
+<!--예약 초기화 버튼-->
+<!--
+    <div style="position: fixed; bottom: 20px; left: 20px; z-index: 1000; display: flex; gap: 10px;">
+        <button id="reset-res-btn" class="btn" style="background-color: #555; color: white; padding: 10px 15px; border-radius: 5px; border: none; cursor: pointer;">
+            🗑️ 예약 초기화
+        </button>
+
+        <button onclick="openAdmin()" class="btn" style="background-color: #333; color: white; padding: 10px 15px; border-radius: 5px; border: none; cursor: pointer;">
+            📊 관리자 모드
+        </button>
+    </div>
+-->
+<!--관리자 모드 추가-->    
+    <div id="admin-modal" class="modal-overlay">
+        <div class="modal-content" style="width: 80%; max-width: 800px;">
+            <h3>📊 전체 예약 내역 관리</h3>
+            <div style="max-height: 400px; overflow-y: auto;">
+                <table border="1" style="width: 100%; border-collapse: collapse; text-align: center;">
+                    <thead style="background: #a21927; color: white;">
+                        <tr>
+                            <th>식당명</th>
+                            <th>예약자</th>
+                            <th>연락처</th>
+                            <th>시간</th>
+                        </tr>
+                    </thead>
+                    <tbody id="admin-table-body">
+                        </tbody>
+                </table>
+            </div>
+            <button onclick="document.getElementById('admin-modal').style.display='none'" style="margin-top:15px; background:#888;">닫기</button>
         </div>
     </div>
 
-    <button id="reset-res-btn" class="btn btn-danger" style="position: fixed; bottom: 20px; left: 20px; z-index: 1000;">
-    🗑️ 예약 기능 초기화
-    </button>
-
     <script>
+        //지도 관련 전역 변수
+        let map, geojsonLayer;
+        const targetGus = ['강남구', '용산구', '중구', '종로구', '송파구', '성동구'];
+
+        // [중요] 서버에서 보내준 restaurants 데이터를 JS 배열로 가져옵니다.
+        // 이 코드는 HTML 파일 내의 script 태그 안에 있어야 작동합니다.
+        const restaurantsData = JSON.parse('{{ restaurants | tojson | safe }}');
+
+
+
+        // 필터를 위한 변수 선언
         let selectedFilters = { grade: [], cuisine: [], favorite: false };
         let currentRestaurantData = null; 
 
-        window.onload = function() {
-            fetchRestaurantsFromServer();
-        };
+        // 마커 필터를 위한 변수 선언
+        let markerLayerGroup = L.layerGroup();
+        // GeoJSON에서 추출하기 위한 변수
+        let pointData;
 
         document.querySelectorAll('.filter-btn').forEach(button => {
             button.addEventListener('click', function() {
@@ -153,6 +354,182 @@
                 fetchRestaurantsFromServer();
             });
         });
+
+        // [추가] 지도 초기화 함수
+        async function initMap() {
+            map = L.map('map', { 
+                zoomControl: false, 
+                attributionControl: false 
+            }).setView([37.5665, 126.9780], 11);
+            
+            await loadMapData(); // 지도의 구 경계선과 마커를 그리는 함수 (아래에서 정의)
+        }
+
+        // [추가] 지도 데이터(GeoJSON) 로드 및 마커 생성
+        async function loadMapData() {
+            try {
+                // 1. 서울시 구 경계선 그리기
+                const mapRes = await fetch('/static/GeoJSON/team_pro_seoul_map_4326.geojson');
+                const mapData = await mapRes.json();
+
+
+                geojsonLayer = L.geoJson(mapData, {
+                    style: (feature) => {
+                        // 특정 구(targetGus)만 강조하거나 기본 색상을 정합니다.
+                        const isTarget = targetGus.includes(feature.properties.SIG_KOR_NM);
+                        return {
+                            fillColor: '#fdfaf5', // 기본 배경색 (미슐랭 크림색)
+                            color: '#6C262A',     // 테두리선 (미슐랭 레드)
+                            weight: 1.2, 
+                            fillOpacity: isTarget ? 1 : 0.9
+                        };
+                    },
+                    onEachFeature: (feature, layer) => {
+                        const guName = feature.properties.SIG_KOR_NM;
+                        
+                        // 우리가 관리하는 구(강남, 용산 등)일 때만 호버 효과를 줍니다.
+                        if (targetGus.includes(guName)) {
+                            layer.on({
+                                // 마우스 올렸을 때: 하얗게 변하고 테두리 굵게!
+                                mouseover: (e) => {
+                                    e.target.setStyle({ 
+                                        fillColor: '#ffffff', 
+                                        weight: 2.5 
+                                    });
+                                },
+                                // 마우스 나갔을 때: 원래대로 복구!
+                                mouseout: (e) => {
+                                    e.target.setStyle({ 
+                                        fillColor: '#fdfaf5', 
+                                        weight: 1.2 
+                                    });
+                                },
+                                // 클릭했을 때: 일단 콘솔에 찍어보고 나중에 필터 연결!
+                                click: (e) => {
+                                // 클릭한 구의 이름을 가져옵니다.
+                                    const guName = feature.properties.SIG_KOR_NM;
+                                    
+                                // 오른쪽 사이드바에 있는 구 버튼들 중 이름이 같은 버튼을 찾습니다.
+                                    const btn = Array.from(document.querySelectorAll('.gu-btn'))
+                                                    .find(b => b.innerText === guName);
+                                    
+                                // 위에서 만든 이동 함수 실행!
+                                    focusDistrict(guName, btn);
+                                    
+                                }
+                            });
+                        }
+                    }
+                }).addTo(map);
+
+
+                // 2. 식당 위치 마커 찍기
+                const pointRes = await fetch('/static/GeoJSON/team_pro_michelin_point_4326.geojson');
+                pointData = await pointRes.json();
+
+                displayMarkers('전체');
+
+            } catch (e) {
+                console.error("지도 로딩 실패:", e);
+            }
+        }
+
+        function displayMarkers(guName) {
+    // 1. 기존에 지도에 있던 마커 바구니를 싹 비웁니다 (지우개)
+            markerLayerGroup.clearLayers();
+
+    // 2. GeoJSON 데이터에서 조건에 맞는 마커만 골라냅니다.
+            L.geoJson(pointData, {
+                filter: (feature) => {
+                    if (guName === '전체') return true;
+            // 각 점(마커)이 가지고 있는 구 정보와 클릭한 구 이름이 같은지 확인!
+            // 팀원 데이터의 구 이름 필드가 'gu'인지 'address'인지 확인이 필요할 수 있습니다.
+                    return feature.properties['addr'] === guName || feature.properties['addr'].includes(guName);
+                },
+                pointToLayer: (feature, latlng) => {
+                    const icon = L.icon({ iconUrl: '/static/img/logo.png', iconSize: [25, 25] });
+                    const marker = L.marker(latlng, { icon: icon });
+                    const resName = feature.properties['name'] || feature.properties['레스토'] || "정보 없음";
+
+            // 진명님의 '번역 보따리' 클릭 이벤트 연결
+                    marker.on('click', () => {
+                        const resInfo = restaurantsData.find(r => r.name === resName);
+                        if (resInfo) {
+                            const translatedInfo = {
+                                restaurant_id: resInfo.restaurant_id,
+                                restaurant_name: resInfo.name,
+                                address: resInfo.addr,
+                                grade: resInfo.star,
+                                cuisine_type: resInfo.cuisine,
+                                price: resInfo.price,
+                                is_favorite: resInfo.is_favorite
+                            };
+                            showDetail(encodeURIComponent(JSON.stringify(translatedInfo)));
+                        }
+                    });
+
+                    marker.bindTooltip(resName, { direction: 'top', className: 'custom-tooltip' });
+                    return marker;
+                }
+            }).addTo(markerLayerGroup); // 바구니에 담기
+
+    // 3. 완성된 바구니를 지도에 표시
+            markerLayerGroup.addTo(map);
+        }
+
+        // 특정 구로 지도를 이동시키고 리스트를 필터링하는 함수
+        function focusDistrict(guName, btn) {
+            // 1. 모든 구 버튼의 'active' 클래스를 제거하고 클릭한 버튼만 강조
+            document.querySelectorAll('.gu-btn').forEach(b => b.classList.remove('active'));
+            if(btn) btn.classList.add('active');
+
+            // 2. [핵심] 지도 이동 로직
+            if (guName !== '전체') {
+                // geojsonLayer(구 경계선 데이터)를 하나씩 훑으며 클릭한 구 이름을 찾습니다.
+                geojsonLayer.eachLayer(layer => {
+                    if (layer.feature.properties.SIG_KOR_NM === guName) {
+                        // 해당 구의 경계(Bounds)를 찾아서 지도를 그곳으로 맞춥니다.
+                        // padding: [50, 50]은 구 주변에 약간의 여유 공간을 주는 설정이에요!
+                        map.fitBounds(layer.getBounds(), { padding: [50, 50] });
+                    }
+                });
+
+                displayMarkers(guName);
+
+                const filtered = restaurantsData.filter(res => res.gu === guName)
+                    .map(res => ({
+                        restaurant_id: res.restaurant_id,
+                        restaurant_name: res.name,
+                        address: res.addr,
+                        grade: res.star.replace(' Stars', '').replace(' Star', ''), // "3 Stars" -> "3" (필요시)
+                        cuisine_type: res.cuisine,
+                        price: res.price,
+                        is_favorite: res.is_favorite
+                    }));
+                drawList(filtered);
+
+            } else {
+
+                const allTranslated = restaurantsData.map(res => ({
+                    restaurant_id: res.restaurant_id,
+                    restaurant_name: res.name,
+                    address: res.addr,
+                    grade: res.star,
+                    cuisine_type: res.cuisine,
+                    price: res.price
+                }));
+                // '전체'를 누르면 다시 서울 전체가 보이도록 초기 위치로 돌아옵니다.
+                map.setView([37.5665, 126.9780], 11);
+                displayMarkers('전체');
+                drawList(allTranslated);
+            }
+        }
+
+        window.onload = function() {
+            initMap();
+            fetchRestaurantsFromServer();
+        };
+
 
         function updateCuisineFilter() {
             document.getElementById('btn-all').classList.remove('active');
@@ -255,10 +632,9 @@
         function showDetail(encodedResData) {
             const res = JSON.parse(decodeURIComponent(encodedResData));
             currentRestaurantData = res; 
-
-            document.getElementById('map-view').style.display = 'none';
-            document.getElementById('detail-view').style.display = 'block';
-            
+            document.getElementById('map').style.display = 'none';
+            document.getElementById('detail-view').classList.add('active');
+            document.getElementById('gu-filter-bar').classList.add('hide');
             document.getElementById('dt-name').innerText = res.restaurant_name;
             document.getElementById('dt-info').innerText = `${res.address} | ${res.cuisine_type}`;
             document.getElementById('dt-stars').innerText = `${res.grade} Stars`;
@@ -269,8 +645,11 @@
         }
 
         function showMap() {
-            document.getElementById('detail-view').style.display = 'none';
-            document.getElementById('map-view').style.display = 'flex';
+
+            document.getElementById('detail-view').classList.remove('active');
+            document.getElementById('map').style.display = 'flex';
+            document.getElementById('gu-filter-bar').classList.remove('hide');
+
         }
 
         // =====================================================================
@@ -341,12 +720,14 @@
                 for (let key in timeConfig) {
                     const btn = document.createElement('button');
                     btn.type = "button";
+                    btn.classList.add('time-btn');  // 호버효과 css
                     btn.innerText = timeConfig[key];
                     btn.style.padding = "10px";
                     btn.style.border = "1px solid #ddd";
                     btn.style.borderRadius = "5px";
                     btn.style.backgroundColor = "white";
                     btn.style.cursor = "pointer";
+                    btn.style.color = "black"
 
                     const isBooked = bookedTimes.includes(parseInt(key));
 
@@ -395,13 +776,23 @@
         }
 
         // 4. 예약 데이터 서버로 전송
-        function submitReservation() {
+        // [수정] isForced 파라미터를 추가하여, '강제 예약(확인)' 시 true를 전달받도록 합니다.
+        function submitReservation(isForced = false) {
             const name = document.getElementById('res-name').value;
             const phone = document.getElementById('res-phone').value;
-            const time = document.getElementById('selected-time-value').value; // 수정된 부분!
+            const time = document.getElementById('selected-time-value').value; 
+
+            const timeLabel = timeConfig[time];
 
             if(!name || !phone || !time) {
                 alert("정보를 모두 입력하고 시간을 선택해주세요.");
+                return;
+            }
+
+            // [추가된 로직] 전화번호 형식 간단 검사 (숫자와 하이픈만 허용)
+            const phoneRegex = /^[0-9-]{10,13}$/;
+            if (!phoneRegex.test(phone)) {
+                alert("유효한 전화번호를 입력해주세요. (예: 010-0000-0000)");
                 return;
             }
 
@@ -412,19 +803,83 @@
                     restaurant_id: currentRestaurantData.restaurant_id,
                     user_name: name,
                     user_phone: phone,
-                    time: time
+                    time: time,
+                    force: isForced // [핵심] 강제 예약 여부를 서버에 전달 (기본값 false)
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success === true) {
+                    // [상황 1] 예약 완벽 성공
+                    document.getElementById('reservation-modal').style.display = 'none';
+                    const msg = `<strong>${name}님</strong>, <br>${timeLabel} 예약이 확정되었습니다!`;
+                    document.getElementById('success-message').innerHTML = msg;
+                    document.getElementById('success-modal').style.display = 'flex';
+                } 
+                else if (data.status === "confirm") {
+                    // [상황 2] 다른 식당에 같은 시간 예약이 있을 때 (사용자 의사 확인)
+                    if (confirm(data.message)) {
+                        // 사용자가 '확인'을 누르면 force 값을 true로 주어 다시 서버로 전송!
+                        submitReservation(true); 
+                    }
+                }
+                else if (data.type === "ALREADY_BOOKED_HERE") {
+                    // [상황 3] 동일 식당에 이미 예약이 있을 때 (강력 차단)
+                    alert(data.message);
+                }
+                else if (data.type === "USER_MISMATCH") {
+                    // [추가] 이름/번호가 안 맞을 때 띄워주는 메시지
+                    alert("⚠️ " + data.message);
+                }                
+                else {
+                    // [기타] 이미 누군가 그 시간을 채갔거나 서버 오류 등
+                    alert("예약에 실패했습니다: " + (data.message || "알 수 없는 오류"));
+                }                
+            })
+            .catch(err => console.error("오류 발생:", err));
+        }
+
+        // 성공 모달 닫기 함수
+        function closeSuccessModal() {
+            document.getElementById('success-modal').style.display = 'none';
+        }
+
+        //예약 취소하기 모달 함수
+        function cancelReservation() {
+            // 이제 중복 ID가 없으므로 정확히 값을 읽어옵니다.
+            const name = document.getElementById('res-name').value;
+            const phone = document.getElementById('res-phone').value;
+
+            if (!name || !phone) {
+                alert("❗ 취소하실 예약의 예약자 성함과 번호를 입력해 주세요.");
+                return;
+            }
+
+            // 사용자에게 다시 한번 확인
+            if (!confirm(`[확인] ${name}님, 예약을 정말 취소하시겠습니까?`)) return;
+            
+            fetch('http://127.0.0.1:5000/api/cancel_reservation', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    restaurant_id: currentRestaurantData.restaurant_id,
+                    user_name: name,
+                    user_phone: phone
                 })
             })
             .then(res => res.json())
             .then(data => {
                 if (data.success) {
-                    alert("예약이 확정되었습니다!");
-                    closeModal();
+                    alert("✨ " + data.message);
+                    closeModal(); 
+                    openReservationModal(); // 취소된 시간을 실시간으로 다시 반영!
                 } else {
-                    alert(data.message || "예약에 실패했습니다.");
+                    alert("⚠️ 취소 실패: " + data.message);
                 }
-            });
+            })
+            .catch(err => console.error("오류:", err));
         }
+
 
         // 예약 정보 초기화하기( 새로운 예약 시뮬레이션을 위해서 )
         document.getElementById('reset-res-btn').addEventListener('click', function() {
@@ -444,6 +899,36 @@
             .catch(error => console.error('Error:', error));
             }
         });
+
+        // 관리자 모드 실행하기
+        async function openAdmin() {
+            const pw = prompt("관리자 비밀번호를 입력하세요.");
+            if (pw !== "1234") { // 나중에 진명님만의 비번으로 바꾸세요!
+                alert("비밀번호가 틀렸습니다.");
+                return;
+            }
+
+            // 서버에서 모든 예약 정보를 가져오는 새로운 API를 호출 (이건 app.py에 추가해야 해요!)
+            const response = await fetch('http://127.0.0.1:5000/api/admin_reservations');
+            const data = await response.json();
+
+            const tbody = document.getElementById('admin-table-body');
+            tbody.innerHTML = '';
+
+            data.forEach(row => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${row.restaurant_name}</td>
+                        <td>${row.user_name}</td>
+                        <td>${row.user_phone}</td>
+                        <td>${timeConfig[row.reservation_time]}</td>
+                    </tr>
+                `;
+            });
+
+            document.getElementById('admin-modal').style.display = 'flex';
+        }
+
     </script>
 
 </body>
