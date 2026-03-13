@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 import mysql.connector
 import pickle
+import os
 
 app = Flask(__name__)
 CORS(app)
@@ -41,18 +42,24 @@ def index():
             cursor.execute(sql)
             restaurants = cursor.fetchall()
 
+            img_root = 'static/img'
+            if os.path.exists(img_root):
+                actual_folders = os.listdir(img_root)
+            else:
+                actual_folders = []
+
+
             # 구(gu) 정보 추출 (팀원의 데이터 가공 로직)
             for res in restaurants:
                 addr_parts = res['addr'].split()
                 res['gu'] = addr_parts[1] if len(addr_parts) > 1 else "기타"
 
-                # 식당 이름을 폴더명으로 사용하여 이미지 3개의 경로 생성
-                res_name = res['name']
-                res['images'] = [
-                    f"/static/img/{res_name}/image_1.jpg",
-                    f"/static/img/{res_name}/image_2.jpg",
-                    f"/static/img/{res_name}/image_3.jpg"
-                ]
+                db_name = res['name']
+                match_folder = next((f for f in actual_folders if db_name in f), db_name)
+
+                res['img_folder'] = match_folder
+
+
 
         except Exception as e:
             print(f"DB Error: {e}")
@@ -114,7 +121,20 @@ def filter_restaurants():
             query += " AND f.restaurant_id IS NOT NULL"
 
         cursor.execute(query, tuple(params))
-        return jsonify(cursor.fetchall())
+        results = cursor.fetchall()
+
+        img_root = os.path.join(os.getcwd(), 'static', 'img')
+        actual_folders = os.listdir(img_root) if os.path.exists(img_root) else []
+
+        for res in results:
+            db_name = res.get('restaurant_name')
+            match_folder = next((f for f in actual_folders if db_name in f), db_name)
+            res['img_folder'] = match_folder
+
+        return jsonify(results)
+    
+
+
     except Exception as e:
         print(f"쿼리 실행 에러: {e}")
         return jsonify({"error": "데이터 조회 실패"}), 500

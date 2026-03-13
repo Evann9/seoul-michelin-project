@@ -193,7 +193,8 @@
             <h3 id="dt-info">정보</h3>
             <h3 id="dt-stars" class="res-stars">별점</h3>
             <p id="dt-desc" class="detail-desc">설명</p>
-            <hr style="border: 0; height: 1px; background: #eee; margin: 20px 0;">
+            <div id="detail-images" style="display: flex; justify-content: space-between; margin-top: 2px; gap: 2%; width: 100%; object-fit: cover; flex: calc(30% - 10px); align-items: center; overflow: hidden; min-width: none; border-radius: 8px; flex-wrap: nowrap; flex-shrink: 1;"></div>
+            <hr style="border: 0; height: 1px; background: #eee; margin: 2px 0;">
             <button onclick="openReservationModal()" style="width:100%; padding:15px; background:var(--michelin-red); color:white; border:none; border-radius:5px; font-weight:bold; cursor:pointer; font-size:1.1rem;">🗓️ 예약하기</button>
         </div>
 
@@ -693,6 +694,36 @@
 
         function showDetail(encodedResData) {
             const res = JSON.parse(decodeURIComponent(encodedResData));
+            const folderName = res.img_folder;
+            const imageUrls = [
+                `/static/img/${folderName}/image_1.jpg`,
+                `/static/img/${folderName}/image_2.jpg`,
+                `/static/img/${folderName}/image_3.jpg`,
+            ];
+            const imgContainer = document.getElementById('detail-images');
+            imgContainer.innerHTML = '';
+
+            imageUrls.forEach(url => {
+                const imgTag = document.createElement('img');
+                imgTag.src = url;
+                imgContainer.appendChild(imgTag);
+                // 1. 가로 크기 기본 설정
+                // 여백(gap) 2% 두 군데(4%)를 제외한 96%를 3등분하여 약 32%씩 가져갑니다.
+                imgTag.style.width = "32%"; 
+                
+                // 2. 높이: 고정 px 대신 가로 길이에 맞춘 '정사각형' 비율 유지
+                // [핵심] 이렇게 해야 창이 좁아져서 가로가 줄어들 때 높이도 '함께' 줄어들어 스크롤이 안 생깁니다!
+                imgTag.style.aspectRatio = "1 / 1"; 
+                
+                // 3. 유연함의 최고봉: 자리가 모자라면 한계까지 작아져라!
+                imgTag.style.flexShrink = "1"; // 공간 부족 시 축소 허용
+                imgTag.style.minWidth = "0";    // [중요] 최소 크기 제한을 없애야 끝까지 줄어듭니다.
+                
+                // 4. 이미지 자체 비율 유지 및 둥근 모서리
+                imgTag.style.objectFit = "cover"; // 찌그러짐 방지
+                imgTag.style.borderRadius = "8px";
+            });
+
             currentRestaurantData = res; 
             document.getElementById('map').style.display = 'none';
             document.getElementById('detail-view').classList.add('active');
