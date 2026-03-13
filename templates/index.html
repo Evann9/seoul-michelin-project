@@ -11,7 +11,7 @@
     <style>
         /*지도를 위한 CSS 적용*/
         :root { 
-            --michelin-red: #6C262A;      /* 메인 레드 */
+            --michelin-red: #7d373a;      /* 메인 레드 */
             --michelin-dark-red: #4A1A1D; 
             --michelin-bg: #fdfaf5;       
             --michelin-dark: #1a1a1a; 
@@ -73,7 +73,7 @@
 
         body { margin: 0; padding: 0; font-family: 'Arial', sans-serif; display: flex; height: 100vh; background-color: #f4f4f4; }
         
-        .left-panel { flex: 6.5; background-color: #e8e8e8; display: flex; justify-content: center; align-items: center; border-right: 2px solid #6C262A; position: relative; overflow: hidden; }
+        .left-panel { flex: 6.5; background-color: #e8e8e8; display: flex; justify-content: center; align-items: center; border-right: 2px solid #7d373a; position: relative; overflow: hidden; }
         
 
         #detail-view {
@@ -107,12 +107,16 @@
         #detail-favorite-btn { font-size: 2.5rem; background: none; border: none; cursor: pointer; margin-left: 20px; vertical-align: super; }
 
         .right-panel { flex: 3.5; display: flex; flex-direction: column; background-color: #FDFAF5; height: 100%;}
-        .filter-section { padding: 20px; background-color: #6C262A; color: white; z-index: 10; }
-        .filter-buttons { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px;}
+        .filter-section { padding: 20px; background-color: #7d373a; color: white; z-index: 10; }
+        .filter-buttons { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; justify-content: center; width: 100%;}
         
-        .btn { padding: 8px 16px; border: none; background: rgba(255,255,255,0.2); color: white; border-radius: 30px; font-weight: 600; cursor: pointer; transition: 0.2s; }
+        .btn { padding: 5px 12px; background: rgba(255, 255, 255, 0.2); border: 1px solid white; color: white; border-radius: 3px; font-weight: 600; cursor: pointer; transition: 0.2s; }
         .btn:hover { background: rgba(255,255,255,0.4); }
-        .btn.active { background: white; color: #a21927; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+        .btn.active { background: white; color: #7d373a; border: 1px solid white;}
+
+        .michelin-icon {width: 20px; height: auto; vertical-align: middle;}
+        .btn.active .michelin-icon {filter: none;}
+        .filter-btn {display: flex;align-items: center; justify-content: center; gap: 4px;}
 
         .cuisine-selector-container { margin-top: 15px; background: rgba(0,0,0,0.1); padding: 10px; border-radius: 10px; height: 120px; overflow-y: auto; }
         .cuisine-checkbox-label { display: block; padding: 5px 10px; cursor: pointer; color: white; border-radius: 5px; transition: background-color 0.2s; }
@@ -171,7 +175,7 @@
                 <div id="map"></div>
         </div>
 
-        <div id="gu-filter-bar" style="position: absolute; top: 20px; left: 50%; transform: translateX(-50%); z-index: 1000; background: rgba(255, 255, 255, 0.95); padding: 10px 20px; border-radius: 50px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); display: flex; gap: 10px; white-space: nowrap;">
+        <div id="gu-filter-bar" style="position: absolute; top: 20px; left: 50%; transform: translateX(-50%); z-index: 1000; background: rgba(255, 255, 255, 0.95); width: 90%; max-width: 550px; padding: 1.5vh 2vw; display: flex; justify-content: center; gap: 1vw; flex-wrap: wrap; border-radius: 50px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); display: flex; gap: 10px; white-space: nowrap;">
             <button class="gu-btn active" onclick="focusDistrict('전체', this)">전체</button>
             <button class="gu-btn" onclick="focusDistrict('강남구', this)">강남구</button>
             <button class="gu-btn" onclick="focusDistrict('용산구', this)">용산구</button>
@@ -209,14 +213,14 @@
             
             <div class="filter-buttons">
                 <button class="btn filter-btn active" id="btn-all" onclick="resetFilters()">전체</button>
-                <button class="btn filter-btn" data-category="grade" data-value="1 Star">🌟 1 Star</button>
-                <button class="btn filter-btn" data-category="grade" data-value="2 Stars">🌟🌟 2 Stars</button>
-                <button class="btn filter-btn" data-category="grade" data-value="3 Stars">🌟🌟🌟 3 Stars</button>
-                <button class="btn filter-btn" data-category="favorite" data-value="true">❤️ 찜한 식당만</button>
+                <button class="btn filter-btn" data-category="grade" data-value="1 Star"><img src="static/img/logo.png" class="michelin-icon"></button>
+                <button class="btn filter-btn" data-category="grade" data-value="2 Stars"><img src="static/img/logo.png" class="michelin-icon"><img src="static/img/logo.png" class="michelin-icon"></button>
+                <button class="btn filter-btn" data-category="grade" data-value="3 Stars"><img src="static/img/logo.png" class="michelin-icon"><img src="static/img/logo.png" class="michelin-icon"><img src="static/img/logo.png" class="michelin-icon"></button>
+                <button class="btn filter-btn" data-category="favorite" data-value="true">❤️</button>
             </div>
 
             <div class="cuisine-selector-container" id="cuisine-checkboxes">
-                <div style="font-size: 0.9rem; margin-bottom: 8px; font-weight: bold;">🍽️ 음식 종류 선택 (클릭만 하세요)</div>
+                <div style="font-size: 0.9rem; margin-bottom: 8px; font-weight: bold;">🍽️ 음식 종류 선택</div>
                 <label class="cuisine-checkbox-label"><input type="checkbox" value="멕시칸" onchange="updateCuisineFilter()"> 🌮 멕시칸</label>
                 <label class="cuisine-checkbox-label"><input type="checkbox" value="비건" onchange="updateCuisineFilter()"> 🥗 비건</label>
                 <label class="cuisine-checkbox-label"><input type="checkbox" value="스시" onchange="updateCuisineFilter()"> 🍣 스시</label>
@@ -385,7 +389,7 @@
                         const isTarget = targetGus.includes(feature.properties.SIG_KOR_NM);
                         return {
                             fillColor: '#fdfaf5', // 기본 배경색 (미슐랭 크림색)
-                            color: '#6C262A',     // 테두리선 (미슐랭 레드)
+                            color: '#7d373a',     // 테두리선 (미슐랭 레드)
                             weight: 1.2, 
                             fillOpacity: isTarget ? 1 : 0.9
                         };
@@ -555,13 +559,13 @@
             display.innerHTML = ''; 
 
             selectedFilters.grade.forEach(g => {
-                display.innerHTML += `<div class="filter-tag">${g} Star <span onclick="removeFilter('grade', '${g}')">✖</span></div>`;
+                display.innerHTML += `<div class="filter-tag">${g}<span onclick="removeFilter('grade', '${g}')">✖</span></div>`;
             });
             selectedFilters.cuisine.forEach(c => {
                 display.innerHTML += `<div class="filter-tag">${c} <span onclick="removeFilter('cuisine', '${c}')">✖</span></div>`;
             });
             if(selectedFilters.favorite) {
-                display.innerHTML += `<div class="filter-tag">❤️ 찜한 식당 <span onclick="removeFilter('favorite', '')">✖</span></div>`;
+                display.innerHTML += `<div class="filter-tag">❤️<span onclick="removeFilter('favorite', '')">✖</span></div>`;
             }
 
             if(selectedFilters.grade.length === 0 && selectedFilters.cuisine.length === 0 && !selectedFilters.favorite) {
@@ -680,7 +684,7 @@
                         <div class="card-favorite-icon" onclick="event.stopPropagation(); toggleFavorite(${res.restaurant_id}, this)">${heartIcon}</div>
                         <p style="font-size: 1.2rem; font-weight: bold; margin: 0 0 5px 0;">${res.restaurant_name}</p>
                         <p style="font-size: 0.9rem; color: #777; margin: 0;">${res.address} | ${res.cuisine_type}</p>
-                        <p style="color: #a21927; font-weight: bold; margin-top:5px;">${res.grade} Stars</p>
+                        <p style="color: #a21927; font-weight: bold; margin-top:5px;">${res.grade} </p>
                     </div>
                 `;
                 listContainer.innerHTML += card;
@@ -693,30 +697,10 @@
             document.getElementById('map').style.display = 'none';
             document.getElementById('detail-view').classList.add('active');
             document.getElementById('gu-filter-bar').classList.add('hide');
-            // --- [추가된 부분: 이미지 갤러리 생성] ---
-            // app.py에서 만든 images 리스트를 활용해 HTML 태그를 만듭니다.
-            const galleryHtml = `
-                <div class="detail-gallery" style="display: flex; gap: 10px; overflow-x: auto; margin-bottom: 20px; padding: 10px 0;">
-                    ${res.images.map(imgSrc => `
-                        <img src="${imgSrc}" 
-                            style="width: 250px; height: 180px; object-fit: cover; border-radius: 12px; flex-shrink: 0; box-shadow: 0 4px 8px rgba(0,0,0,0.1);"
-                            onerror="this.src='/static/img/default.png'">
-                    `).join('')}
-                </div>
-            `;
-
-            // 상세 페이지 상단에 이미지 갤러리를 삽입합니다. 
-            // (만약 HTML에 이미 dt-gallery 같은 id를 가진 div가 있다면 그곳에 넣으셔도 됩니다.)
-            const detailView = document.getElementById('detail-view');
-            // 기존 내용 위에 갤러리를 배치하기 위해 맨 앞에 삽입하거나 특정 위치에 넣습니다.
-            const container = document.getElementById('detail-content-area'); // 상세내용을 감싸는 div id가 필요합니다.
-            if(container) container.innerHTML = galleryHtml + container.innerHTML; 
-            // ------------------------------------------
-
             document.getElementById('dt-name').innerText = res.restaurant_name;
             document.getElementById('dt-info').innerText = `${res.address} | ${res.cuisine_type}`;
-            document.getElementById('dt-stars').innerText = `${res.grade} Stars`;
-            document.getElementById('dt-desc').innerText = "평균 가격대: ₩" + res.price.toLocaleString();
+            document.getElementById('dt-stars').innerText = `${res.grade}`;
+            document.getElementById('dt-desc').innerText = "평균 가격대: " + res.price;
 
             const heartBtn = document.getElementById('detail-favorite-btn');
             heartBtn.innerText = res.is_favorite === 1 ? '❤️' : '🤍';
