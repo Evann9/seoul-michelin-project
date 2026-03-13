@@ -212,7 +212,7 @@
                 <button class="btn filter-btn" data-category="grade" data-value="1 Star">🌟 1 Star</button>
                 <button class="btn filter-btn" data-category="grade" data-value="2 Stars">🌟🌟 2 Stars</button>
                 <button class="btn filter-btn" data-category="grade" data-value="3 Stars">🌟🌟🌟 3 Stars</button>
-                <button class="btn filter-btn" data-category="favorite" data-value="true" style="border: 1px solid white;">❤️ 찜한 식당만</button>
+                <button class="btn filter-btn" data-category="favorite" data-value="true">❤️ 찜한 식당만</button>
             </div>
 
             <div class="cuisine-selector-container" id="cuisine-checkboxes">
@@ -319,13 +319,19 @@
 
 
         // 필터를 위한 변수 선언
-        let selectedFilters = { grade: [], cuisine: [], favorite: false };
+        let selectedFilters = {
+            grade: [], 
+            cuisine: [], 
+            favorite: false, 
+            gu: '전체' 
+        };
         let currentRestaurantData = null; 
 
         // 마커 필터를 위한 변수 선언
         let markerLayerGroup = L.layerGroup();
         // GeoJSON에서 추출하기 위한 변수
         let pointData;
+        
 
         document.querySelectorAll('.filter-btn').forEach(button => {
             button.addEventListener('click', function() {
@@ -483,6 +489,8 @@
             document.querySelectorAll('.gu-btn').forEach(b => b.classList.remove('active'));
             if(btn) btn.classList.add('active');
 
+            selectedFilters.gu = guName;
+
             // 2. [핵심] 지도 이동 로직
             if (guName !== '전체') {
                 // geojsonLayer(구 경계선 데이터)를 하나씩 훑으며 클릭한 구 이름을 찾습니다.
@@ -523,6 +531,8 @@
                 displayMarkers('전체');
                 drawList(allTranslated);
             }
+            fetchRestaurantsFromServer();
+
         }
 
         window.onload = function() {
@@ -591,8 +601,56 @@
                 body: JSON.stringify(selectedFilters)
             })
             .then(response => response.json())
-            .then(data => drawList(data))
+            .then(data => {
+                drawList(data);
+                displayMarkersByList(data);
+            })
             .catch(error => console.error('에러:', error));
+        }
+
+        // 서버에서 받은 '필터링된 식당 배열'을 매개변수로 받습니다.
+        function displayMarkersByList(filteredList) {
+            // 1. 기존 마커 바구니 비우기
+            markerLayerGroup.clearLayers();
+
+            // 2. 합격자 명단(이름들)만 따로 뽑아두기 (검색 속도를 위해)
+            const allowedNames = filteredList.map(res => res.restaurant_name || res.name);
+
+            // 3. 우리가 가진 좌표 보따리(pointData)에서 필터링!
+            L.geoJson(pointData, {
+                filter: (feature) => {
+                    const resName = feature.properties.name || feature.properties.레스토 || "";
+                    // 합격자 명단에 이 식당 이름이 포함되어 있다면 true!
+                    return allowedNames.includes(resName);
+                },
+                pointToLayer: (feature, latlng) => {
+                    const icon = L.icon({ iconUrl: '/static/img/logo.png', iconSize: [25, 25] });
+                    const marker = L.marker(latlng, { icon: icon });
+                    const resName = feature.properties.name || feature.properties.레스토 || "정보 없음";
+
+                    // 마커 클릭 시 상세창 연결 (진명님 스타일 보따리)
+                    marker.on('click', () => {
+                        const resInfo = restaurantsData.find(r => r.name === resName);
+                        if (resInfo) {
+                            const translated = {
+                                restaurant_id: resInfo.restaurant_id,
+                                restaurant_name: resInfo.name,
+                                address: resInfo.addr,
+                                grade: resInfo.star,
+                                cuisine_type: resInfo.cuisine,
+                                price: resInfo.price,
+                                is_favorite: resInfo.is_favorite
+                            };
+                            showDetail(encodeURIComponent(JSON.stringify(translated)));
+                        }
+                    });
+
+                    marker.bindTooltip(resName, { direction: 'top', className: 'custom-tooltip' });
+                    return marker;
+                }
+            }).addTo(markerLayerGroup);
+
+            markerLayerGroup.addTo(map);
         }
 
         // [핵심 수정 부분] 에러가 왔을 때 자바스크립트가 터지지 않도록 방어하는 로직 추가!

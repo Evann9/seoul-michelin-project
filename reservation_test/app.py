@@ -61,10 +61,13 @@ def index():
 @app.route('/api/filter', methods=['POST'])
 def filter_restaurants():
     filters = request.get_json()
+    gu_filter = filters.get('gu', '전체')
+
     conn = get_db_connection()
     if not conn: return jsonify({"error": "DB 연결 실패"}), 500
 
     cursor = conn.cursor(dictionary=True)
+
     try:
         query = """
             SELECT 
@@ -80,6 +83,11 @@ def filter_restaurants():
             WHERE 1=1
         """
         params = []
+
+        # 구 필터
+        if gu_filter != '전체':
+            query += " AND m.address LIKE %s"
+            params.append(f"%{gu_filter.replace('구', '')}%")
 
         # 별점 필터
         if filters.get('grade') and len(filters['grade']) > 0:
