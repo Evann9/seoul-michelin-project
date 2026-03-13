@@ -1,0 +1,59 @@
+#con,
+.main-con {
+  float: left;
+  margin-top: 40px;
+  margin: 0;
+  width: 70%;
+  height: 100vh;
+  display: flex;
+  background-color: white;
+}
+#logo {
+  margin-left: 85px;
+  clip-path: inset(0 25% 0 0); /*guide부분 제거*/
+  align-self: center;
+  width: 65%; /* 원하는 너비 */
+  height: auto; /* 비율 유지 */
+  max-width: 100%; /* 부모 초과 방지 */
+  clip-path: inset(0 25% 0 0); /*guide부분 제거*/
+}
+#fos {
+  text-align: center;
+  font-family: "Noto Sans KR", "Noto Sans", sans-self;
+  font-weight: 700;
+  color: white;
+  letter-spacing: 2px;
+  font-size: 32px;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+  letter-spacing: 2px;
+}
+#fob {
+  text-align: center;
+  font-family: "Noto Sans KR", "Noto Sans", sans-self;
+  font-weight: 700;
+  color: white;
+  letter-spacing: 2px;
+  font-size: 71px;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+  letter-spacing: 2px;
+}
+#bener {
+  background-color: #8e3138;
+  float: left;
+  width: 30%;
+  height: 100%;
+}
+.back_slide {
+  background: linear-gradient(135deg, #fdf6e3);
+  justify-content: center;
+  opacity: 100%;
+  transition: opacity 1s;
+  overflow: hidden;
+}
+.elem_slide {
+  position: absolute;
+  width: 60%;
+  height: auto;
+  opacity: 50%;
+  transition: opacity 1s;
+}
