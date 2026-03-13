@@ -693,10 +693,30 @@
             document.getElementById('map').style.display = 'none';
             document.getElementById('detail-view').classList.add('active');
             document.getElementById('gu-filter-bar').classList.add('hide');
+            // --- [추가된 부분: 이미지 갤러리 생성] ---
+            // app.py에서 만든 images 리스트를 활용해 HTML 태그를 만듭니다.
+            const galleryHtml = `
+                <div class="detail-gallery" style="display: flex; gap: 10px; overflow-x: auto; margin-bottom: 20px; padding: 10px 0;">
+                    ${res.images.map(imgSrc => `
+                        <img src="${imgSrc}" 
+                            style="width: 250px; height: 180px; object-fit: cover; border-radius: 12px; flex-shrink: 0; box-shadow: 0 4px 8px rgba(0,0,0,0.1);"
+                            onerror="this.src='/static/img/default.png'">
+                    `).join('')}
+                </div>
+            `;
+
+            // 상세 페이지 상단에 이미지 갤러리를 삽입합니다. 
+            // (만약 HTML에 이미 dt-gallery 같은 id를 가진 div가 있다면 그곳에 넣으셔도 됩니다.)
+            const detailView = document.getElementById('detail-view');
+            // 기존 내용 위에 갤러리를 배치하기 위해 맨 앞에 삽입하거나 특정 위치에 넣습니다.
+            const container = document.getElementById('detail-content-area'); // 상세내용을 감싸는 div id가 필요합니다.
+            if(container) container.innerHTML = galleryHtml + container.innerHTML; 
+            // ------------------------------------------
+
             document.getElementById('dt-name').innerText = res.restaurant_name;
             document.getElementById('dt-info').innerText = `${res.address} | ${res.cuisine_type}`;
             document.getElementById('dt-stars').innerText = `${res.grade} Stars`;
-            document.getElementById('dt-desc').innerText = "평균 가격대: " + res.price;
+            document.getElementById('dt-desc').innerText = "평균 가격대: ₩" + res.price.toLocaleString();
 
             const heartBtn = document.getElementById('detail-favorite-btn');
             heartBtn.innerText = res.is_favorite === 1 ? '❤️' : '🤍';

@@ -46,6 +46,14 @@ def index():
                 addr_parts = res['addr'].split()
                 res['gu'] = addr_parts[1] if len(addr_parts) > 1 else "기타"
 
+                # 식당 이름을 폴더명으로 사용하여 이미지 3개의 경로 생성
+                res_name = res['name']
+                res['images'] = [
+                    f"/static/img/{res_name}/image_1.jpg",
+                    f"/static/img/{res_name}/image_2.jpg",
+                    f"/static/img/{res_name}/image_3.jpg"
+                ]
+
         except Exception as e:
             print(f"DB Error: {e}")
         finally:
