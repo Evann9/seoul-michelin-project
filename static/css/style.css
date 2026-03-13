@@ -1,0 +1,154 @@
+        /*지도를 위한 CSS 적용*/
+        :root { 
+            --michelin-red: #7d373a;      /* 메인 레드 */
+            --michelin-dark-red: #4A1A1D; 
+            --michelin-bg: #fdfaf5;       
+            --michelin-dark: #1a1a1a; 
+        }
+
+        /* 지도 컨테이너 스타일 */
+        #map-container { 
+            width: 100%; 
+            height: 100%; 
+            position: relative; 
+            background-color: var(--michelin-red); 
+        }
+
+        #gu-filter-bar {
+            transition: top 0.4s ease, opacity 0.4s ease;
+            opacity: 1;
+        }
+        .gu-btn {
+            padding: 8px 16px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+            color: #555;
+            transition: all 0.3s ease;
+        }
+
+        .gu-btn:hover {
+            background: #f8f8f8;
+            border-color: var(--michelin-red);
+            color: var(--michelin-red);
+        }
+
+        .gu-btn.active {
+            background: var(--michelin-red);
+            color: white;
+            border-color: var(--michelin-red);
+        }   
+        
+        #gu-filter-bar.hide {
+            top: -100px !important; 
+            opacity: 0;
+        }
+
+        #map { width: 100%; height: 100%; background: transparent !important; }
+        /* 마커를 올렸을 때 나오는 툴팁 스타일 */
+        .custom-tooltip {
+            background-color: var(--michelin-dark) !important;
+            border: 1px solid var(--michelin-red) !important;
+            color: white !important;
+            font-size: 13px !important;
+            font-weight: bold !important;
+            padding: 6px 12px !important;
+            border-radius: 4px !important;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.4) !important;
+        }
+
+
+        body { margin: 0; padding: 0; font-family: 'Arial', sans-serif; display: flex; height: 100vh; background-color: #f4f4f4; }
+        
+        .left-panel { flex: 6.5; background-color: #e8e8e8; display: flex; justify-content: center; align-items: center; border-right: 2px solid #7d373a; position: relative; overflow: hidden; }
+        
+
+        #detail-view {
+            display: block; /* 항상 block으로 두되 */
+            position: absolute;
+            top: 0;
+            right: -100%; /* 처음엔 화면 오른쪽 바깥에 숨겨둠 */
+            width: 100%;
+            height: 100%;
+            background: #FDFAF5;
+            padding: 50px;
+            box-sizing: border-box;
+            overflow-y: auto;
+            transition: right 0.4s ease-out, opacity 0.4s ease; /* 0.4초 동안 부드럽게! */
+            opacity: 0;
+            z-index: 5;
+        }
+
+        /* 상세 화면이 활성화되었을 때 붙여줄 이름표 */
+        #detail-view.active {
+            right: 0; /* 화면 안으로 들어옴 */
+            opacity: 1;
+        }        
+
+        .back-btn { padding: 10px 15px; background: #7d373a; color: white; border: none; border-radius: 5px; cursor: pointer; margin-bottom: 20px; font-size: 1rem; }
+        .back-btn:hover { background: #a21927; }
+        .detail-title { font-size: 3rem; color: #a21927; margin: 0 0 10px 0; display: inline-block;}
+        .res-stars { color: #a21927; font-weight: bold; }
+        .detail-desc { font-size: 1.2rem; line-height: 1.8; color: #444; margin-top: 20px; }
+
+        #detail-favorite-btn { font-size: 2.5rem; background: none; border: none; cursor: pointer; margin-left: 20px; vertical-align: super; }
+
+        .right-panel { flex: 3.5; display: flex; flex-direction: column; background-color: #FDFAF5; height: 100%;}
+        .filter-section { padding: 20px; background-color: #7d373a; color: white; z-index: 10; }
+        .filter-buttons { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; justify-content: center; width: 100%;}
+        
+        .btn { padding: 5px 12px; background: rgba(255, 255, 255, 0.2); border: 1px solid white; color: white; border-radius: 3px; font-weight: 600; cursor: pointer; transition: 0.2s; }
+        .btn:hover { background: rgba(255,255,255,0.4); }
+        .btn.active { background: white; color: #7d373a; border: 1px solid white;}
+
+        .michelin-icon {width: 20px; height: auto; vertical-align: middle;}
+        .btn.active .michelin-icon {filter: none;}
+        .filter-btn {display: flex;align-items: center; justify-content: center; gap: 4px;}
+
+        .cuisine-selector-container { margin-top: 15px; background: rgba(0,0,0,0.1); padding: 10px; border-radius: 10px; height: 120px; overflow-y: auto; }
+        .cuisine-checkbox-label { display: block; padding: 5px 10px; cursor: pointer; color: white; border-radius: 5px; transition: background-color 0.2s; }
+        .cuisine-checkbox-label:hover { background-color: rgba(255,255,255,0.2); }
+        .cuisine-checkbox-label input[type="checkbox"] { margin-right: 8px; cursor: pointer; }
+        
+        #active-filters-display { margin-top: 10px; display: flex; gap: 5px; flex-wrap: wrap; }
+        .filter-tag { background: white; color: #a21927; padding: 3px 10px; border-radius: 15px; font-size: 0.8rem; font-weight: bold; display: flex; align-items: center; gap: 5px;}
+        .filter-tag span { cursor: pointer; color: #888; }
+        .filter-tag span:hover { color: red; }
+        
+        .list-section { flex: 1; overflow-y: auto; padding: 20px; }
+        .restaurant-card { border: 1px solid #ddd; padding: 15px; margin-bottom: 15px; border-radius: 8px; cursor: pointer; transition: 0.2s; position: relative; background-color: white;}
+        .restaurant-card:hover { border-color: #a21927; box-shadow: 0 2px 8px rgba(162, 25, 39, 0.2); background-color: #fdf5f6; }
+        
+        .card-favorite-icon { position: absolute; top: 15px; right: 15px; font-size: 1.5rem; }
+
+        /* 예약 모달 스타일 */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; justify-content: center; align-items: center; }
+        .modal-content { background: white; padding: 30px; border-radius: 10px; width: 300px; display: flex; flex-direction: column; gap: 15px; }
+        .modal-content input, .modal-content select { padding: 10px; border: 1px solid #ccc; border-radius: 5px; }
+        .modal-content button { padding: 10px; background: #a21927; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        
+        button {
+            user-select: none;
+            -webkit-user-select: none; /* 버튼에 텍스트 드래그 방지 */
+        }
+        
+        /* =======버튼 호버 효과========= */
+        /* 일반적인 버튼 상태 */
+        .time-btn {
+            transition: all 0.2s ease; /* 색이 변할 때 0.2초 동안 부드럽게! */
+        }
+
+        /* 마우스를 올렸을 때 (Hover) */
+        .time-btn:hover:not(:disabled) {
+            background-color: #fceced !important; /* 연한 붉은색 배경 */
+            border-color: #a21927 !important;     /* 테두리는 강조색으로 */
+            color: #a21927 !important;            /* 글자색도 강조색으로 */
+            transform: translateY(-2px);          /* 버튼이 살짝 위로 떠오르는 효과! */
+        }
+
+        /* 예약 불가(disabled)인 버튼은 호버 효과가 안 나게 막기 */
+        .time-btn:disabled {
+            cursor: not-allowed;
+        }
