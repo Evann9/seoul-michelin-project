@@ -270,7 +270,7 @@ function updateFilterTags() {
         display.innerHTML += `<div class="filter-tag">${c} <span onclick="removeFilter('cuisine', '${c}')">✖</span></div>`;
     });
     if(selectedFilters.favorite) {
-        display.innerHTML += `<div class="filter-tag">❤️ 찜한 식당 <span onclick="removeFilter('favorite', '')">✖</span></div>`;
+        display.innerHTML += `<div class="filter-tag">⭐ 찜한 식당 <span onclick="removeFilter('favorite', '')">✖</span></div>`;
     }
 
     // 아무것도 선택 안 했으면 다시 '전체' 버튼을 빨갛게 켭니다.
@@ -394,7 +394,7 @@ function drawList(restaurants) {
 
     // 3. 데이터가 잘 왔다면, 식당(res)을 하나하나 꺼내서 카드를 만듭니다.
     restaurants.forEach(res => {
-        const heartIcon = res.is_favorite === 1 ? '❤️' : '🤍'; // 1이면 빨간 하트, 아니면 빈 하트
+        const heartIcon = res.is_favorite === 1 ? '⭐' : '☆'; // 1이면 빨간 하트, 아니면 빈 하트
         
         // 나중에 카드를 눌렀을 때 데이터를 넘겨주기 위해 전체 데이터를 예쁘게 접어둡니다(stringify).
         const resDataStr = encodeURIComponent(JSON.stringify(res));
@@ -460,10 +460,10 @@ function showDetail(encodedResData) {
     document.getElementById("dt-name").innerText = res.restaurant_name;
     document.getElementById('dt-info').innerText = `${res.address} | ${res.cuisine_type}`;
     document.getElementById('dt-stars').innerText = `${res.grade}`;
-    document.getElementById('dt-desc').innerText = "평균 가격대: " + res.price;
+    document.getElementById('dt-desc').innerText = "평균 가격대: ₩ " + res.price + '~';
 
     const heartBtn = document.getElementById('detail-favorite-btn');
-    heartBtn.innerText = res.is_favorite === 1 ? '❤️' : '🤍';
+    heartBtn.innerText = res.is_favorite === 1 ? '⭐' : '☆';
 }
 
 // "지도로 돌아가기" 버튼을 누르면 상세창을 닫고 다시 지도를 켜는 함수입니다.
@@ -488,7 +488,7 @@ function toggleFavorite(resId, element) {
     .then(data => {
         if (data.success) {
             // 서버가 성공했다고 하면 하트를 토글(전환)해줍니다.
-            element.innerText = data.action === 'added' ? '❤️' : '🤍';
+            element.innerText = data.action === 'added' ? '⭐' : '☆';
         }
     });
 }
@@ -505,7 +505,7 @@ function toggleFavoriteFromDetail() {
     .then(data => {
         if (data.success) {
             const btn = document.getElementById('detail-favorite-btn');
-            btn.innerText = data.action === 'added' ? '❤️' : '🤍';
+            btn.innerText = data.action === 'added' ? '⭐' : '☆';
             fetchRestaurantsFromServer(); // 리스트에도 바뀐 하트를 즉시 반영하기 위해 새로고침!
         }
     });

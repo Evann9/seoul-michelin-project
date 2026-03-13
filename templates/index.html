@@ -34,7 +34,7 @@
             <button onclick="showMap()" class="back-btn">⬅️ 지도로 돌아가기</button>
             <br>
             <h1 id="dt-name" class="detail-title">이름</h1>
-            <button id="detail-favorite-btn" onclick="toggleFavoriteFromDetail()">🤍</button>
+            <button id="detail-favorite-btn" onclick="toggleFavoriteFromDetail()">☆</button>
             <h3 id="dt-info">정보</h3>
             <h3 id="dt-stars" class="res-stars">별점</h3>
             <p id="dt-desc" class="detail-desc">설명</p>
@@ -62,21 +62,21 @@
                 <button class="btn filter-btn" data-category="grade" data-value="1 Star"><img src="static/img/logo.png" class="michelin-icon"></button>
                 <button class="btn filter-btn" data-category="grade" data-value="2 Stars"><img src="static/img/logo.png" class="michelin-icon"><img src="static/img/logo.png" class="michelin-icon"></button>
                 <button class="btn filter-btn" data-category="grade" data-value="3 Stars"><img src="static/img/logo.png" class="michelin-icon"><img src="static/img/logo.png" class="michelin-icon"><img src="static/img/logo.png" class="michelin-icon"></button>
-                <button class="btn filter-btn" data-category="favorite" data-value="true">❤️</button>
+                <button class="btn filter-btn" data-category="favorite" data-value="true">⭐</button>
             </div>
 
             <div class="cuisine-selector-container" id="cuisine-checkboxes">
                 <div style="font-size: 0.9rem; margin-bottom: 8px; font-weight: bold;"> 음식 종류 선택</div>
-                <label class="cuisine-checkbox-label"><input type="checkbox" value="멕시칸" onchange="updateCuisineFilter()">멕시칸</label>
-                <label class="cuisine-checkbox-label"><input type="checkbox" value="비건" onchange="updateCuisineFilter()">비건</label>
-                <label class="cuisine-checkbox-label"><input type="checkbox" value="스시" onchange="updateCuisineFilter()">스시</label>
-                <label class="cuisine-checkbox-label"><input type="checkbox" value="이노베이티브" onchange="updateCuisineFilter()">이노베이티브</label>
-                <label class="cuisine-checkbox-label"><input type="checkbox" value="일식" onchange="updateCuisineFilter()">일식</label>
-                <label class="cuisine-checkbox-label"><input type="checkbox" value="중식" onchange="updateCuisineFilter()">중식</label>
-                <label class="cuisine-checkbox-label"><input type="checkbox" value="지중해식" onchange="updateCuisineFilter()">지중해식</label>
-                <label class="cuisine-checkbox-label"><input type="checkbox" value="컨템포러리" onchange="updateCuisineFilter()">컨템포러리</label>
-                <label class="cuisine-checkbox-label"><input type="checkbox" value="프렌치" onchange="updateCuisineFilter()">프렌치</label>
                 <label class="cuisine-checkbox-label"><input type="checkbox" value="한식" onchange="updateCuisineFilter()">한식</label>
+                <label class="cuisine-checkbox-label"><input type="checkbox" value="중식" onchange="updateCuisineFilter()">중식</label>
+                <label class="cuisine-checkbox-label"><input type="checkbox" value="일식" onchange="updateCuisineFilter()">일식</label>
+                <label class="cuisine-checkbox-label"><input type="checkbox" value="스시" onchange="updateCuisineFilter()">스시</label>
+                <label class="cuisine-checkbox-label"><input type="checkbox" value="프렌치" onchange="updateCuisineFilter()">프렌치</label>
+                <label class="cuisine-checkbox-label"><input type="checkbox" value="컨템포러리" onchange="updateCuisineFilter()">컨템포러리</label>
+                <label class="cuisine-checkbox-label"><input type="checkbox" value="이노베이티브" onchange="updateCuisineFilter()">이노베이티브</label>
+                <label class="cuisine-checkbox-label"><input type="checkbox" value="멕시칸" onchange="updateCuisineFilter()">멕시칸</label>
+                <label class="cuisine-checkbox-label"><input type="checkbox" value="지중해식" onchange="updateCuisineFilter()">지중해식</label>
+                <label class="cuisine-checkbox-label"><input type="checkbox" value="비건" onchange="updateCuisineFilter()">비건</label>
             </div>
 
             <div id="active-filters-display"></div>
