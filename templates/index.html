@@ -644,7 +644,8 @@
                                 grade: resInfo.star,
                                 cuisine_type: resInfo.cuisine,
                                 price: resInfo.price,
-                                is_favorite: resInfo.is_favorite
+                                is_favorite: resInfo.is_favorite,
+                                img_folder: resInfo.img_folder || resInfo.name
                             };
                             showDetail(encodeURIComponent(JSON.stringify(translated)));
                         }
@@ -694,7 +695,7 @@
 
         function showDetail(encodedResData) {
             const res = JSON.parse(decodeURIComponent(encodedResData));
-            const folderName = res.img_folder;
+            const folderName = res.img_folder || res.restaurant_name;
             const imageUrls = [
                 `/static/img/${folderName}/image_1.jpg`,
                 `/static/img/${folderName}/image_2.jpg`,
