@@ -98,8 +98,8 @@
             opacity: 1;
         }        
 
-        .back-btn { padding: 10px 15px; background: #333; color: white; border: none; border-radius: 5px; cursor: pointer; margin-bottom: 20px; font-size: 1rem; }
-        .back-btn:hover { background: #555; }
+        .back-btn { padding: 10px 15px; background: #7d373a; color: white; border: none; border-radius: 5px; cursor: pointer; margin-bottom: 20px; font-size: 1rem; }
+        .back-btn:hover { background: #a21927; }
         .detail-title { font-size: 3rem; color: #a21927; margin: 0 0 10px 0; display: inline-block;}
         .res-stars { color: #a21927; font-weight: bold; }
         .detail-desc { font-size: 1.2rem; line-height: 1.8; color: #444; margin-top: 20px; }
@@ -186,7 +186,7 @@
         </div>
             
         <div id="detail-view">
-            <button onclick="showMap()" class="back-btn">⬅️ 지도로 돌아가기</button>
+            <button onclick="showMap()" class="back-btn"> ⬅ 지도로 돌아가기</button>
             <br>
             <h1 id="dt-name" class="detail-title">이름</h1>
             <button id="detail-favorite-btn" onclick="toggleFavoriteFromDetail()">🤍</button>
@@ -700,7 +700,7 @@
             document.getElementById('dt-name').innerText = res.restaurant_name;
             document.getElementById('dt-info').innerText = `${res.address} | ${res.cuisine_type}`;
             document.getElementById('dt-stars').innerText = `${res.grade}`;
-            document.getElementById('dt-desc').innerText = "평균 가격대: " + res.price;
+            document.getElementById('dt-desc').innerText = "평균 가격대: ₩" + res.price;
 
             const heartBtn = document.getElementById('detail-favorite-btn');
             heartBtn.innerText = res.is_favorite === 1 ? '❤️' : '🤍';
