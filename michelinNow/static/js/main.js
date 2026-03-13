@@ -155,6 +155,7 @@ function displayMarkers(guName) {
             marker.on('click', () => {
                 // 전체 데이터(restaurantsData)에서 이 마커의 이름과 똑같은 녀석의 전체 정보를 찾습니다.
                 const resInfo = restaurantsData.find(r => r.name === resName);
+                console.log('resInfo');
                 if (resInfo) {
                     // 상세창이 이해할 수 있는 꼬리표(이름표)로 예쁘게 번역해서 포장합니다.
                     const translatedInfo = {
@@ -356,7 +357,8 @@ function displayMarkersByList(filteredList) {
                         grade: resInfo.star,
                         cuisine_type: resInfo.cuisine,
                         price: resInfo.price,
-                        is_favorite: resInfo.is_favorite
+                        is_favorite: resInfo.is_favorite,
+                        img_folder: resInfo.img_folder
                     };
                     showDetail(encodeURIComponent(JSON.stringify(translated)));
                 }

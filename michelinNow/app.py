@@ -78,11 +78,6 @@ def index():
                 # 두 번째 단어(인덱스 1)가 구 이름이므로, 그걸 'gu'라는 새 꼬리표에 담아줍니다.
                 res['gu'] = addr_parts[1] if len(addr_parts) > 1 else "기타"
 
-                db_name = res['name']
-                match_folder = next((f for f in actual_folders if db_name in f), db_name)
-
-                res['img_folder'] = match_folder
-
         except Exception as e:
             print(f"DB Error: {e}") # 데이터 꺼내다 넘어지면 에러 출력
         finally:
@@ -155,27 +150,16 @@ def filter_restaurants():
         cursor.execute(query, tuple(params))
         # 긁어온 데이터를 자바스크립트가 알아먹기 쉽게 JSON 형태로 예쁘게 포장해서 돌려보냅니다!
         results = cursor.fetchall()
+
         img_root = os.path.join(os.getcwd(), 'static', 'img')
     # 1. 실제 폴더명 리스트 (예: ['정식당 Jungsik', '가온'])
         actual_folders = os.listdir(img_root) if os.path.exists(img_root) else []
-    
-        cleaned_folders = [re.sub(r'[^가-힣]', '', f) for f in actual_folders]
 
         for res in results:
-        # DB에서 가져온 식당 이름에서 한글만 남깁니다. (예: "정식당" 또는 "정식당 Jungsik")
-            db_name = res.get('restaurant_name') or res.get('name')
-            db_hangul = re.sub(r'[^가-힣]', '', db_name)
 
-            match_folder = db_name  # 찾지 못했을 때를 대비한 기본값
-        
-        # 3. [핵심 로직] 한글 리스트(cleaned_folders)를 돌면서 인덱스(i)를 확인합니다.
-            for i in range(len(cleaned_folders)):
-            # 만약 한글로 뽑아낸 이름이 서로 같다면?
-                if db_hangul == cleaned_folders[i]:
-                # 4. 정답은 한글 리스트가 아니라, '같은 번호'의 실제 리스트(actual_folders)에서 가져옵니다!
-                    match_folder = actual_folders[i]
-                    break
-        
+            db_name = res['restaurant_name']
+            match_folder = next((f for f in actual_folders if db_name in f), db_name)
+
             res['img_folder'] = match_folder
 
         return jsonify(results)
