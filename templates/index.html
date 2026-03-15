@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>Michelin Guide - Complete with DB & Favorites</title>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;700&display=swap" rel="stylesheet">
+    
+    <!--CSS 파일 불러오기-->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+</head>
+<body>
+
+    <div class="left-panel">
+        
+        <div id="map-container">
+                <div id="map"></div>
+        </div>
+
+        <div id="gu-filter-bar" style="position: absolute; top: 20px; left: 50%; transform: translateX(-50%); z-index: 1000; background: rgba(255, 255, 255, 0.95); padding: 10px 20px; border-radius: 50px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); display: flex; gap: 10px; white-space: nowrap;">
+            <button class="gu-btn active" onclick="focusDistrict('전체', this)">전체</button>
+            <button class="gu-btn" onclick="focusDistrict('강남구', this)">강남구</button>
+            <button class="gu-btn" onclick="focusDistrict('용산구', this)">용산구</button>
+            <button class="gu-btn" onclick="focusDistrict('중구', this)">중구</button>
+            <button class="gu-btn" onclick="focusDistrict('종로구', this)">종로구</button>
+            <button class="gu-btn" onclick="focusDistrict('송파구', this)">송파구</button>
+            <button class="gu-btn" onclick="focusDistrict('성동구', this)">성동구</button>
+        </div>
+            
+        <div id="detail-view">
+            <button onclick="showMap()" class="back-btn">⬅️ 지도로 돌아가기</button>
+            <br>
+            <h1 id="dt-name" class="detail-title">이름</h1>
+            <button id="detail-favorite-btn" onclick="toggleFavoriteFromDetail()">☆</button>
+            <h3 id="dt-info">정보</h3>
+            <h3 id="dt-stars" class="res-stars">별점</h3>
+            <p id="dt-desc" class="detail-desc">설명</p>
+            <div id="detail-images" style="display: flex; justify-content: space-between; margin-top: 2px; gap: 2%; width: 100%; object-fit: cover; flex: calc(30% - 10px); align-items: center; overflow: hidden; min-width: none; border-radius: 8px; flex-wrap: nowrap; flex-shrink: 1;"></div>
+            <hr style="border: 0; height: 1px; background: #eee; margin: 5px 0;">
+            <button onclick="openReservationModal()" style="width:100%; padding:15px; background:var(--michelin-red); color:white; border:none; border-radius:5px; font-weight:bold; cursor:pointer; font-size:1.1rem;">🗓️ 예약하기</button>
+        </div>
+
+        <div style="position: absolute; bottom: 20px; left: 20px; z-index: 1000; display: flex; gap: 10px;">
+            <button id="reset-res-btn" class="btn" style="background-color: #555; color: white; padding: 10px 15px; border-radius: 5px; border: none; cursor: pointer; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">
+                🗑️ 예약 초기화
+            </button>
+            <button onclick="openAdmin()" class="btn" style="background-color: #333; color: white; padding: 10px 15px; border-radius: 5px; border: none; cursor: pointer; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">
+                📊 관리자 모드
+            </button>
+        </div>
+    </div>
+
+    <div class="right-panel">
+        <div class="filter-section">
+            <h3 style="margin:0; font-family: 'Noto Sans KR', sans-serif; font-size: 2rem; font-weight: 300; letter-spacing: 2px; color: white; text-transform: uppercase; opacity: 0.9; text-align: center; width: 100%; display: block;">MICHELIN GUIDE </h3>
+            
+            <div class="filter-buttons">
+                <button class="btn filter-btn active" id="btn-all" onclick="resetFilters()">전체</button>
+                <button class="btn filter-btn" data-category="grade" data-value="1 Star"><img src="static/img/logo.png" class="michelin-icon"></button>
+                <button class="btn filter-btn" data-category="grade" data-value="2 Stars"><img src="static/img/logo.png" class="michelin-icon"><img src="static/img/logo.png" class="michelin-icon"></button>
+                <button class="btn filter-btn" data-category="grade" data-value="3 Stars"><img src="static/img/logo.png" class="michelin-icon"><img src="static/img/logo.png" class="michelin-icon"><img src="static/img/logo.png" class="michelin-icon"></button>
+                <button class="btn filter-btn" data-category="favorite" data-value="true">⭐</button>
+            </div>
+
+            <div class="cuisine-selector-container" id="cuisine-checkboxes">
+                <div style="font-size: 0.9rem; margin-bottom: 8px; font-weight: bold;"> 음식 종류 선택</div>
+                <label class="cuisine-checkbox-label"><input type="checkbox" value="한식" onchange="updateCuisineFilter()">한식</label>
+                <label class="cuisine-checkbox-label"><input type="checkbox" value="중식" onchange="updateCuisineFilter()">중식</label>
+                <label class="cuisine-checkbox-label"><input type="checkbox" value="일식" onchange="updateCuisineFilter()">일식</label>
+                <label class="cuisine-checkbox-label"><input type="checkbox" value="스시" onchange="updateCuisineFilter()">스시</label>
+                <label class="cuisine-checkbox-label"><input type="checkbox" value="프렌치" onchange="updateCuisineFilter()">프렌치</label>
+                <label class="cuisine-checkbox-label"><input type="checkbox" value="컨템포러리" onchange="updateCuisineFilter()">컨템포러리</label>
+                <label class="cuisine-checkbox-label"><input type="checkbox" value="이노베이티브" onchange="updateCuisineFilter()">이노베이티브</label>
+                <label class="cuisine-checkbox-label"><input type="checkbox" value="멕시칸" onchange="updateCuisineFilter()">멕시칸</label>
+                <label class="cuisine-checkbox-label"><input type="checkbox" value="지중해식" onchange="updateCuisineFilter()">지중해식</label>
+                <label class="cuisine-checkbox-label"><input type="checkbox" value="비건" onchange="updateCuisineFilter()">비건</label>
+            </div>
+
+            <div id="active-filters-display"></div>
+        </div>
+
+        <div class="list-section" id="restaurant-list">
+            <p style="color:#777; text-align:center;">목록을 불러오는 중입니다...</p>
+        </div>
+    </div>
+
+    <div id="reservation-modal" class="modal-overlay">
+        <div class="modal-content" style="width: 350px;">
+            <h3 style="margin: 0 0 15px 0; text-align: center; color: #a21927;">📅 예약 관리 시스템</h3>
+            
+            <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                <label style="font-size: 0.8rem; color: #666;">예약 정보 입력</label>
+                <input type="text" id="res-name" placeholder="성함을 입력해주세요" style="width: 100%; margin-top: 5px; box-sizing: border-box;">
+                <input type="text" id="res-phone" placeholder="전화번호 (010-0000-0000)" style="width: 100%; margin-top: 10px; box-sizing: border-box;">
+            </div>
+
+            <div style="margin-bottom: 15px;">
+                <label style="font-size: 0.8rem; color: #666;">시간 선택 (필수)</label>
+                <div id="time-slot-container" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 5px;"></div>
+                
+                <input type="hidden" id="selected-time-value">
+            </div>
+
+            <hr style="border: 0; border-top: 1px solid #eee; margin: 10px 0;">
+
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                <button onclick="submitReservation()" style="background: #a21927; font-weight: bold; padding: 12px;">✅ 예약 확정하기</button>
+                <button onclick="cancelReservation()" style="background: #555; padding: 10px;">❌ 기존 예약 취소하기</button>
+                <button onclick="closeModal()" style="background: #ccc; color: #333; padding: 8px;">닫기</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="success-modal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 1001;">
+        <div style="background: white; padding: 30px; border-radius: 15px; text-align: center; width: 300px; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
+            <div style="font-size: 50px; margin-bottom: 10px;">✅</div>
+            <h2 style="margin-bottom: 10px; color: #a21927;">예약 완료!</h2>
+            <p id="success-message" style="margin-bottom: 20px; line-height: 1.5; color: #555;"></p>
+            <button onclick="closeSuccessModal()" style="background: #a21927; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; width: 100%;">확인</button>
+        </div>
+    </div>
+        
+    <div id="admin-modal" class="modal-overlay">
+        <div class="modal-content" style="width: 80%; max-width: 800px;">
+            <h3>📊 전체 예약 내역 관리</h3>
+            <div style="max-height: 400px; overflow-y: auto;">
+                <table border="1" style="width: 100%; border-collapse: collapse; text-align: center;">
+                    <thead style="background: #a21927; color: white;">
+                        <tr>
+                            <th>식당명</th>
+                            <th>예약자</th>
+                            <th>연락처</th>
+                            <th>시간</th>
+                        </tr>
+                    </thead>
+                    <tbody id="admin-table-body">
+                    </tbody>
+                </table>
+            </div>
+            <button onclick="document.getElementById('admin-modal').style.display='none'" style="margin-top:15px; background:#888;">닫기</button>
+        </div>
+    </div>
+
+
+    <script>
+        // [핵심] Flask 서버(파이썬)에서 HTML을 그려줄 때, DB의 전체 식당 데이터를 여기에 미리 쏟아부어 줍니다.
+        // 덕분에 웹페이지가 열리자마자 모든 식당 정보를 JS가 알고 시작하게 됩니다.
+        const restaurantsData = JSON.parse('{{ restaurants | tojson | safe }}');
+    </script>
+    <script src="{{url_for('static', filename='js/main.js')}}"></script>
+
+</body>
+</html>
